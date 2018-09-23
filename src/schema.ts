@@ -1,7 +1,7 @@
 import { gql } from 'apollo-server'
 import gapiToGraphQL from 'gapi-to-graphql'
 import YouTubeAPI from 'gapi-to-graphql/google_apis/youtube-v3'
-import { makeExecutableSchema, addMockFunctionsToSchema, mergeSchemas, IResolvers } from 'graphql-tools'
+import { makeExecutableSchema, mergeSchemas, IResolvers } from 'graphql-tools'
 import { PubSub } from 'graphql-subscriptions'
 
 export const pubsub = new PubSub()
@@ -14,6 +14,7 @@ const handSchema = gql`
   schema {
     mutation: Mutation
     subscription: Subscription
+    query: Query
   }
 
   input VideoPushInput {
@@ -21,8 +22,16 @@ const handSchema = gql`
     channel: ID
   }
 
+  type Video {
+    id: ID
+  }
+
   input ChannelCreateInput {
     channelName: String
+  }
+
+  type Query {
+    videos: [ID]
   }
 
   type Mutation {
@@ -31,7 +40,7 @@ const handSchema = gql`
   }
 
   type Subscription {
-    videoPushed: ID
+    videoPushed: Video
   }
 `
 
@@ -40,23 +49,18 @@ interface IVideoPushInput {
   channel: String
 }
 
-interface INoop {}
-
 const handResolvers = {
   Mutation: {
-    videoPush(_, { videoId, channel }) {
-      console.log('pushing videroddddopokkkkkkkkkkkkkoppo of ', videoId, channel)
+    videoPush(_, { input: { videoId, channel } }) {
+      console.log('pushing videroddddopokkkkkkkkkkkkkoppo of ', videoId)
       videos.push({ videoId, channel })
+
+      pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId } })
     }
   },
   Subscription: {
-    commentAdded: {
-      resolve: payload => {
-        return {
-          customData: payload
-        }
-      },
-      subscribe: () => pubsub.asyncIterator('commentAdded')
+    videoPushed: {
+      subscribe: () => pubsub.asyncIterator('VIDEO_ADDED')
     }
   }
 }
