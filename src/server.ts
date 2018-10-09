@@ -1,7 +1,7 @@
 import { ApolloServer, gql } from 'apollo-server'
 import { schema } from './schema'
 
-const server = new ApolloServer({ schema })
+const server = new ApolloServer({ schema, cors: true })
 
 server
   .listen()

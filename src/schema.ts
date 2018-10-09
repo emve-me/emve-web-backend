@@ -52,10 +52,9 @@ interface IVideoPushInput {
 const handResolvers = {
   Mutation: {
     videoPush(_, { input: { videoId, channel } }) {
-      console.log('pushing videroddddopokkkkkkkkkkkkkoppo of ', videoId)
       videos.push({ videoId, channel })
-
       pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId } })
+      return videoId
     }
   },
   Subscription: {
