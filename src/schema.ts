@@ -56,8 +56,8 @@ const handResolvers = {
       pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId } })
       return videoId
     },
-    channelCreate(){
-
+    channelCreate(_, { input: { channelName } }) {
+      console.log('creating channel', channelName)
     }
   },
   Subscription: {
@@ -74,7 +74,8 @@ const schema1 = makeExecutableSchema({
   resolvers
 })
 
-interface Context {}
+interface Context {
+}
 
 const schema2 = makeExecutableSchema<Context>({
   typeDefs: handSchema,
