@@ -19,16 +19,6 @@ export const pg = knex({
   }
 })
 
-console.log(
-  {
-    host: DB_HOST,
-    password: DB_PASSWORD,
-    user: DB_USER,
-    database: DB_DATABASE
-  }
-)
-
-
 export function upsert({ table, object, key, updateIgnore = [] }) {
   const keys = typeof key === 'string' ? [key] : key
   keys.forEach(field =>

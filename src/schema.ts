@@ -55,6 +55,9 @@ const handResolvers = {
       videos.push({ videoId, channel })
       pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId } })
       return videoId
+    },
+    channelCreate(){
+
     }
   },
   Subscription: {
