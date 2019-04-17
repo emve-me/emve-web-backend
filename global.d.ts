@@ -1,4 +1,4 @@
-interface TContext {
+export type TContext = {
   user: {
     iss
     azp

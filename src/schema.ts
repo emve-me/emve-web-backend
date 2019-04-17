@@ -3,6 +3,8 @@ import gapiToGraphQL from 'gapi-to-graphql'
 import YouTubeAPI from 'gapi-to-graphql/google_apis/youtube-v3'
 import { makeExecutableSchema, mergeSchemas, IResolvers } from 'graphql-tools'
 import { PubSub } from 'graphql-subscriptions'
+import { TContext } from '../global'
+import { pg } from './knex'
 
 export const pubsub = new PubSub()
 
@@ -36,6 +38,7 @@ const handSchema = gql`
   type Mutation {
     channelCreate(input: ChannelCreateInput): Int
     videoPush(input: VideoPushInput): ID
+    authenticate:ID
   }
 
   type Subscription {
@@ -50,6 +53,10 @@ interface IVideoPushInput {
 
 const resolvers = {
   Mutation: {
+    authenticate(_, __, ctx: TContext) {
+      console.log('USER', ctx.user)
+      return 'new user'
+    },
     videoPush(_, { input: { videoId, channel } }, ctx: TContext) {
       console.log('video push', ctx)
       videos.push({ videoId, channel })
@@ -57,6 +64,7 @@ const resolvers = {
       return videoId
     },
     channelCreate(_, { input: { channelName } }, ctx: TContext) {
+
       console.log('creating channel', channelName)
     }
   },
@@ -77,9 +85,9 @@ const schema1 = makeExecutableSchema({
 })
 
 
-const schema2 = makeExecutableSchema<TContext>({
+const schema2 = makeExecutableSchema({
   typeDefs: handSchema,
-  resolvers: resolvers as IResolvers<any, TContext>
+  resolvers: resolvers
 })
 
 const newschema = mergeSchemas({
