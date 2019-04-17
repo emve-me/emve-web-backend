@@ -4,8 +4,8 @@ create table users (
   email text,
   email_verified boolean,
   picture text,
-  first_name text,
-  last_name text,
+  first_name  text not null,
+  last_name text not null,
   locale text,
   created_on date not null default current_timestamp
 );
