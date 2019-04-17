@@ -8,7 +8,6 @@ export const pubsub = new PubSub()
 
 const videos: Array<IVideoPushInput> = []
 
-const { schema, resolvers } = gapiToGraphQL({ gapiAsJsonSchema: YouTubeAPI })
 
 const handSchema = gql`
   schema {
@@ -49,14 +48,15 @@ interface IVideoPushInput {
   channel: String
 }
 
-const handResolvers = {
+const resolvers = {
   Mutation: {
-    videoPush(_, { input: { videoId, channel } }) {
+    videoPush(_, { input: { videoId, channel } }, ctx: TContext) {
+      console.log('video push', ctx)
       videos.push({ videoId, channel })
       pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId } })
       return videoId
     },
-    channelCreate(_, { input: { channelName } }) {
+    channelCreate(_, { input: { channelName } }, ctx: TContext) {
       console.log('creating channel', channelName)
     }
   },
@@ -67,19 +67,19 @@ const handResolvers = {
   }
 }
 
+const { schema: ytSchema, resolvers: ytResolvers } = gapiToGraphQL({ gapiAsJsonSchema: YouTubeAPI })
+
 const schema1 = makeExecutableSchema({
   typeDefs: gql`
-    ${schema}
+    ${ytSchema}
   `,
-  resolvers
+  resolvers: ytResolvers
 })
 
-interface Context {
-}
 
-const schema2 = makeExecutableSchema<Context>({
+const schema2 = makeExecutableSchema<TContext>({
   typeDefs: handSchema,
-  resolvers: handResolvers as IResolvers<any, Context>
+  resolvers: resolvers as IResolvers<any, TContext>
 })
 
 const newschema = mergeSchemas({
