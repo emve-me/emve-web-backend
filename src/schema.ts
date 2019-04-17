@@ -8,8 +8,7 @@ import { pg } from './knex'
 
 export const pubsub = new PubSub()
 
-const videos: Array<IVideoPushInput> = []
-
+const videos = []
 
 const handSchema = gql`
   schema {
@@ -19,8 +18,8 @@ const handSchema = gql`
   }
 
   input VideoPushInput {
-    videoId: ID
-    channel: ID
+    videoId: ID!
+    channel: ID!
   }
 
   type Video {
@@ -36,8 +35,8 @@ const handSchema = gql`
   }
 
   type Mutation {
-    channelCreate(input: ChannelCreateInput): Int
-    videoPush(input: VideoPushInput): ID
+    channelCreate(input: ChannelCreateInput!): Int
+    videoPush(input: VideoPushInput!): ID
     authenticate:ID
   }
 
@@ -46,10 +45,6 @@ const handSchema = gql`
   }
 `
 
-interface IVideoPushInput {
-  videoId: String
-  channel: String
-}
 
 const resolvers = {
   Mutation: {
@@ -57,11 +52,14 @@ const resolvers = {
       console.log('USER', ctx.user)
       return 'new user'
     },
-    videoPush(_, { input: { videoId, channel } }, ctx: TContext) {
+    videoPush(_, { input: { channel, videoId } }: GQL.IVideoPushOnMutationArguments, ctx: TContext) {
+
+
       console.log('video push', ctx)
-      videos.push({ videoId, channel })
-      pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId } })
-      return videoId
+      //    videos.push({ videoId, channel })
+      //  pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId } })
+      //return videoId
+      return ''
     },
     channelCreate(_, { input: { channelName } }, ctx: TContext) {
 
