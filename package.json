@@ -19,18 +19,18 @@
   },
   "homepage": "https://github.com/rlancer/emve-gql-server#readme",
   "dependencies": {
-    "apollo-server": "^2.1.0",
+    "apollo-server": "^2.4.8",
     "dotenv": "^7.0.0",
-    "gapi-to-graphql": "^2.0.4",
-    "graphql": "^14.0.2",
-    "graphql-subscriptions": "^1.0.0",
+    "gapi-to-graphql": "^2.0.5",
+    "graphql": "^14.2.1",
+    "graphql-subscriptions": "^1.1.0",
     "knex": "^0.16.5",
-    "pg": "^7.9.0"
+    "pg": "^7.10.0"
   },
   "devDependencies": {
     "apollo": "^2.8.3",
-    "nodemon": "^1.18.4",
-    "ts-node": "^7.0.1",
-    "typescript": "^3.0.3"
+    "nodemon": "^1.18.11",
+    "ts-node": "^8.1.0",
+    "typescript": "^3.4.3"
   }
 }

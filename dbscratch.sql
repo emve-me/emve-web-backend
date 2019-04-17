@@ -1,5 +1,18 @@
-CREATE TABLE channels (
-    code        text PRIMARY KEY,
-    title       text,
-    created_on date NOT NULL DEFAULT CURRENT_TIMESTAMP
+create table users (
+  id bigserial primary key,
+  google_id text not null unique,
+  email text,
+  email_verified boolean,
+  picture text,
+  first_name text,
+  last_name text,
+  locale text,
+  created_on date not null default current_timestamp
+);
+
+create table channels (
+    code        text primary key,
+    "name"       text,
+    created_on date not null default current_timestamp,
+    owner bigint not null references users(id)
 );
