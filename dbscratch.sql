@@ -11,7 +11,7 @@ create table users (
 );
 
 create table channels (
-    code        text primary key,
+    id bigserial primary key,
     "name"       text,
     created_on date not null default current_timestamp,
     owner bigint not null references users(id)

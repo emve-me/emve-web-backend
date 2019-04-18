@@ -5,10 +5,13 @@ import { makeExecutableSchema, mergeSchemas, IResolvers } from 'graphql-tools'
 import { PubSub } from 'graphql-subscriptions'
 import { TContext } from '../global'
 import { pg, upsert } from './knex'
+import shortid from 'shortid'
+import { toBase26 } from './Base26'
 
 export const pubsub = new PubSub()
 
 const videos = []
+
 
 const handSchema = gql`
   schema {
@@ -35,7 +38,7 @@ const handSchema = gql`
   }
 
   type Mutation {
-    channelCreate(input: ChannelCreateInput!): Int
+    channelCreate(input: ChannelCreateInput!): ID
     videoPush(input: VideoPushInput!): ID
     authenticate:ID
   }
@@ -85,9 +88,13 @@ const resolvers = {
       //  return videoId
       return ''
     },
-    channelCreate(_, { input: { channelName } }: GQL.IChannelCreateOnMutationArguments, ctx: TContext) {
+    async channelCreate(_, { input: { channelName } }: GQL.IChannelCreateOnMutationArguments, ctx: TContext): Promise<string> {
+      const [newChannelResp] = await pg('channels').insert({
+        name: channelName,
+        owner: pg('users').select('id').where({ google_id: ctx.user.sub })
+      }, 'id')
 
-      console.log('creating channel', channelName)
+      return toBase26(newChannelResp)
     }
   },
   Subscription: {

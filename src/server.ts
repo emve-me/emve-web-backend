@@ -5,6 +5,11 @@ import jwt from 'jsonwebtoken'
 
 const server = new ApolloServer({
   schema, cors: true,
+
+  formatError: (error) => {
+    console.error(error)
+    return error
+  },
   context: ({ req }) => {
 
     const { authorization } = req.headers
