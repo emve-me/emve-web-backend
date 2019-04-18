@@ -8,7 +8,7 @@
     "dev": "nodemon --watch src -e ts --exec \"ts-node --files -r dotenv/config src/server\"",
     "codegen": "apollo client:codegen --target typescript --includes src/**/*.ts",
     "download-gql-schema": "gql-schema-dl http://localhost:4000",
-    "types-from-gql": "npm run download-gql-schema && gql2ts schema.graphql -o graphqlTypes.d.ts"
+    "gql-types": "npm run download-gql-schema && gql2ts schema.graphql -o graphqlTypes.d.ts"
   },
   "repository": {
     "type": "git",

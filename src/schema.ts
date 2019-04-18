@@ -6,7 +6,8 @@ import { PubSub } from 'graphql-subscriptions'
 import { TContext } from '../global'
 import { pg, upsert } from './knex'
 import shortid from 'shortid'
-import { toBase26 } from './Base26'
+import { fromBase26, toBase26 } from './Base26'
+
 
 export const pubsub = new PubSub()
 
@@ -29,8 +30,35 @@ const handSchema = gql`
     id: ID
   }
 
+
+
+
   input ChannelCreateInput {
     channelName: String
+  }
+
+  input ChannelJoinInput{
+    channelId: ID!
+  }
+
+  type User {
+    id: ID
+    google_id: ID
+    email: String
+    email_verified: Boolean
+    picture: String
+    fullName: String
+    firstName: String
+    lastName: String
+    locale: String
+    created_on: String
+  }
+
+  type Channel {
+    id:ID
+    createdOn:String
+    name:String
+    owner:User
   }
 
   type Query {
@@ -41,6 +69,7 @@ const handSchema = gql`
     channelCreate(input: ChannelCreateInput!): ID
     videoPush(input: VideoPushInput!): ID
     authenticate:ID
+    channelJoin(input:ChannelJoinInput!):Channel
   }
 
   type Subscription {
@@ -50,6 +79,11 @@ const handSchema = gql`
 
 
 const resolvers = {
+  Channel: {
+    createdOn: () => 'CREATED ONNN'
+
+
+  },
   Mutation: {
     async authenticate(_, __, ctx: TContext): Promise<string> {
 
@@ -95,13 +129,27 @@ const resolvers = {
       }, 'id')
 
       return toBase26(newChannelResp)
+    },
+    async channelJoin(_, { input: { channelId } }: GQL.IChannelJoinOnMutationArguments) {
+      console.log(channelId)
+
+      const channelIdAsNumber = fromBase26(channelId)
+
+      const resp = await pg('channels').select().where({ id: channelIdAsNumber })
+
+      // return channelId
+      return resp
+
+
     }
   },
+
   Subscription: {
     videoPushed: {
       subscribe: () => pubsub.asyncIterator('VIDEO_ADDED')
     }
   }
+
 }
 
 const { schema: ytSchema, resolvers: ytResolvers } = gapiToGraphQL({ gapiAsJsonSchema: YouTubeAPI })
@@ -120,7 +168,8 @@ const schema2 = makeExecutableSchema({
 })
 
 const newschema = mergeSchemas({
-  schemas: [schema2, schema1]
+  schemas: [schema1, schema2],
+
 })
 
 export { newschema as schema }

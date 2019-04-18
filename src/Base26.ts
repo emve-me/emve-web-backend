@@ -1,5 +1,27 @@
 const abc = 'LDZETHIJKUQCGASMWVOYPRXNBF'.split('')
 
+const charCode = (char: string) => {
+  char = char.toUpperCase()
+  const r = abc.findIndex(c => c === char) + 1
+  console.log(char, r)
+  return r
+}
+
+export const fromBase26 = (alpha: string): number => {
+  alpha = alpha.toUpperCase()
+  if (!/^[A-Z]+$/.test(alpha)) {
+    throw new Error('Input must be a non-empty string comprised of only characters A-Z')
+  }
+
+  const letters = alpha.split('')
+  let out = 0
+
+  for (let i = 0; i < letters.length; i++) {
+    out += (charCode(letters[letters.length - 1 - i])) * Math.pow(26, i)
+  }
+
+  return out
+}
 
 export const toBase26 = (decimal: number | string): string => {
 

@@ -833,6 +833,10 @@ input ChannelCreateInput {
   channelName: String
 }
 
+input ChannelJoinInput {
+  channelId: ID!
+}
+
 type ChannelListResponse {
   """Etag of this resource."""
   etag: String
@@ -3424,9 +3428,10 @@ type MonitorStreamInfo {
 }
 
 type Mutation {
-  channelCreate(input: ChannelCreateInput!): Int
+  channelCreate(input: ChannelCreateInput!): ID
   videoPush(input: VideoPushInput!): ID
   authenticate: ID
+  channelJoin(input: ChannelJoinInput!): Channel
 }
 
 enum MyRatingVideosEnumParam {
@@ -5029,6 +5034,19 @@ type ThumbnailDetails {
 """Stub token pagination template to suppress results."""
 type TokenPagination {
   thisTypeHasNoFieldsAndGraphQLDontLikeThat: Boolean
+}
+
+type User {
+  id: ID
+  google_id: ID
+  email: String
+  email_verified: Boolean
+  picture: String
+  fullName: String
+  firstName: String
+  lastName: String
+  locale: String
+  created_on: String
 }
 
 """A video resource represents a YouTube video."""

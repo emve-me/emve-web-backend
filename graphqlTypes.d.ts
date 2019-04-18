@@ -7754,9 +7754,10 @@ declare namespace GQL {
 
   interface IMutation {
     __typename: 'Mutation';
-    channelCreate: number | null;
+    channelCreate: string | null;
     videoPush: string | null;
     authenticate: string | null;
+    channelJoin: IChannel | null;
   }
 
   interface IChannelCreateOnMutationArguments {
@@ -7767,6 +7768,10 @@ declare namespace GQL {
     input: IVideoPushInput;
   }
 
+  interface IChannelJoinOnMutationArguments {
+    input: IChannelJoinInput;
+  }
+
   interface IChannelCreateInput {
     channelName?: string | null;
   }
@@ -7774,6 +7779,24 @@ declare namespace GQL {
   interface IVideoPushInput {
     videoId: string;
     channel: string;
+  }
+
+  interface IChannelJoinInput {
+    channelId: string;
+  }
+
+  interface IUser {
+    __typename: 'User';
+    id: string | null;
+    google_id: string | null;
+    email: string | null;
+    email_verified: boolean | null;
+    picture: string | null;
+    fullName: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    locale: string | null;
+    created_on: string | null;
   }
 }
 
