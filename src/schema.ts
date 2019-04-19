@@ -55,6 +55,16 @@ const handSchema = gql`
     owner:User
   }
 
+  type Track {
+    id: ID
+    video_id: ID
+    title: String
+    owner: User
+    channel: Channel
+    addedOn: String 
+    played: Boolean
+  }
+
   type Query {
     videos: [ID]
   }

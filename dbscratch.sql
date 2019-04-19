@@ -25,5 +25,5 @@ create table tracks (
     owner bigint not null references users(id),
     channel bigint not null references channels(id),
     added_on date not null default current_timestamp,
-    played boolean
+    played boolean not null default false
 );
