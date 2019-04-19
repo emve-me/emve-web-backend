@@ -680,66 +680,11 @@ type CdnSettings {
   resolution: String
 }
 
-"""A channel resource contains information about a YouTube channel."""
 type Channel {
-  """
-  The auditionDetails object encapsulates channel data that is relevant for YouTube Partners during the audition process.
-  """
-  auditDetails: ChannelAuditDetails
-
-  """
-  The brandingSettings object encapsulates information about the branding of the channel.
-  """
-  brandingSettings: ChannelBrandingSettings
-
-  """
-  The contentDetails object encapsulates information about the channel's content.
-  """
-  contentDetails: ChannelContentDetails
-
-  """
-  The contentOwnerDetails object encapsulates channel data that is relevant for YouTube Partners linked with the channel.
-  """
-  contentOwnerDetails: ChannelContentOwnerDetails
-
-  """
-  The conversionPings object encapsulates information about conversion pings that need to be respected by the channel.
-  """
-  conversionPings: ChannelConversionPings
-
-  """Etag of this resource."""
-  etag: String
-
-  """The ID that YouTube uses to uniquely identify the channel."""
-  id: String
-
-  """
-  The invideoPromotion object encapsulates information about promotion campaign associated with the channel.
-  """
-  invideoPromotion: InvideoPromotion
-
-  """
-  Identifies what kind of resource this is. Value: the fixed string "youtube#channel".
-  """
-  kind: String
-
-  """
-  The snippet object contains basic details about the channel, such as its title, description, and thumbnail images.
-  """
-  snippet: ChannelSnippet
-
-  """The statistics object encapsulates statistics for the channel."""
-  statistics: ChannelStatistics
-
-  """
-  The status object encapsulates information about the privacy status of the channel.
-  """
-  status: ChannelStatus
-
-  """
-  The topicDetails object encapsulates information about Freebase topics associated with the channel.
-  """
-  topicDetails: ChannelTopicDetails
+  id: ID
+  createdOn: String
+  name: String
+  owner: User
 }
 
 """
@@ -4079,7 +4024,6 @@ type PropertyValue {
 }
 
 type Query {
-  videos: [ID]
   YoutubeApi(
     """Data format for the response."""
     alt: AltRootEnumParam
@@ -4107,6 +4051,7 @@ type Query {
     """Deprecated. Please use quotaUser instead."""
     userIp: String
   ): YoutubeResources
+  videos: [ID]
 }
 
 type relatedPlaylists {
@@ -4608,8 +4553,6 @@ type SponsorSnippet {
 }
 
 type Subscription {
-  videoPushed: Video
-
   """
   The contentDetails object contains basic statistics about the subscription.
   """
@@ -4636,6 +4579,7 @@ type Subscription {
   The subscriberSnippet object contains basic details about the sbuscriber.
   """
   subscriberSnippet: SubscriptionSubscriberSnippet
+  videoPushed(input: VideoPushedInput!): Video
 }
 
 """Details about the content to witch a subscription refers."""
@@ -5049,103 +4993,8 @@ type User {
   created_on: String
 }
 
-"""A video resource represents a YouTube video."""
 type Video {
-  """
-  Age restriction details related to a video. This data can only be retrieved by the video owner.
-  """
-  ageGating: VideoAgeGating
-
-  """
-  The contentDetails object contains information about the video content,
-  including the length of the video and its aspect ratio.
-  """
-  contentDetails: VideoContentDetails
-
-  """Etag of this resource."""
-  etag: String
-
-  """
-  The fileDetails object encapsulates information about the video file that was
-  uploaded to YouTube, including the file's resolution, duration, audio and
-  video codecs, stream bitrates, and more. This data can only be retrieved by
-  the video owner.
-  """
-  fileDetails: VideoFileDetails
-
-  """The ID that YouTube uses to uniquely identify the video."""
-  id: String
-
-  """
-  Identifies what kind of resource this is. Value: the fixed string "youtube#video".
-  """
-  kind: String
-
-  """
-  The liveStreamingDetails object contains metadata about a live video
-  broadcast. The object will only be present in a video resource if the video is
-  an upcoming, live, or completed live broadcast.
-  """
-  liveStreamingDetails: VideoLiveStreamingDetails
-
-  """
-  The monetizationDetails object encapsulates information about the monetization status of the video.
-  """
-  monetizationDetails: VideoMonetizationDetails
-
-  """
-  The player object contains information that you would use to play the video in an embedded player.
-  """
-  player: VideoPlayer
-
-  """
-  The processingDetails object encapsulates information about YouTube's progress
-  in processing the uploaded video file. The properties in the object identify
-  the current processing status and an estimate of the time remaining until
-  YouTube finishes processing the video. This part also indicates whether
-  different types of data or content, such as file details or thumbnail images,
-  are available for the video.
-  
-  The processingProgress object is designed to be polled so that the video
-  uploaded can track the progress that YouTube has made in processing the
-  uploaded video file. This data can only be retrieved by the video owner.
-  """
-  processingDetails: VideoProcessingDetails
-
-  """
-  The projectDetails object contains information about the project specific video metadata.
-  """
-  projectDetails: VideoProjectDetails
-
-  """
-  The recordingDetails object encapsulates information about the location, date and address where the video was recorded.
-  """
-  recordingDetails: VideoRecordingDetails
-
-  """
-  The snippet object contains basic details about the video, such as its title, description, and category.
-  """
-  snippet: VideoSnippet
-
-  """The statistics object contains statistics about the video."""
-  statistics: VideoStatistics
-
-  """
-  The status object contains information about the video's uploading, processing, and privacy statuses.
-  """
-  status: VideoStatus
-
-  """
-  The suggestions object encapsulates suggestions that identify opportunities to
-  improve the video quality or the metadata for the uploaded video. This data
-  can only be retrieved by the video owner.
-  """
-  suggestions: VideoSuggestions
-
-  """
-  The topicDetails object encapsulates information about Freebase topics associated with the video.
-  """
-  topicDetails: VideoTopicDetails
+  id: ID
 }
 
 """
@@ -5826,9 +5675,15 @@ type VideoProjectDetails {
   tags: [String]
 }
 
+input VideoPushedInput {
+  channel: ID
+}
+
 input VideoPushInput {
   videoId: ID!
   channel: ID!
+  title: String
+  time: Int
 }
 
 type VideoRating {

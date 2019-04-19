@@ -16,3 +16,14 @@ create table channels (
     created_on date not null default current_timestamp,
     owner bigint not null references users(id)
 );
+
+create table tracks (
+    id bigserial primary key,
+    video_id text not null,
+    title text not null,
+    "time" int,
+    owner bigint not null references users(id),
+    channel bigint not null references channels(id),
+    added_on date not null default current_timestamp,
+    played boolean
+);

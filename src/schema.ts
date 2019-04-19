@@ -19,6 +19,8 @@ const handSchema = gql`
   input VideoPushInput {
     videoId: ID!
     channel: ID!
+    title: String
+    time: Int
   }
 
   type Video {
@@ -106,9 +108,16 @@ const resolvers = {
 
       return upsertResponse.id
     },
-    videoPush(_, { input: { channel, videoId } }: GQL.IVideoPushOnMutationArguments, ctx: TContext) {
+    async videoPush(_, { input: { channel, videoId, title } }: GQL.IVideoPushOnMutationArguments, ctx: TContext) {
 
-      // add video to channel via tracks
+      const videoAddedResponse = await pg('tracks').insert({
+        channel: fromBase26(channel),
+        video_id: videoId,
+        title,
+        owner: pg('users').select('id').where({ google_id: ctx.user.sub })
+      })
+
+      console.log(videoAddedResponse)
 
       pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId, channel } })
 
