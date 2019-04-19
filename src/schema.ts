@@ -82,9 +82,10 @@ const handSchema = gql`
     owner:User
     tracks (first: Int, after: ID ):Tracks
   }
-  
+
   type Query {
-    videos: [ID]
+    channel (id: ID!):Channel
+
   }
 
   type Mutation {
@@ -105,10 +106,24 @@ const handSchema = gql`
 
 
 const resolvers = {
+  Query: {
+    channel: async (_, { id }, ctx) => {
+      const dbId = fromBase26(id)
+      const [channelRow] = await pg('channels').select('*').where({ id: dbId })
+
+      return { ...channelRow, id, dbId }
+    }
+  },
   Channel: {
-    createdOn: () => 'CREATED ONNN'
+    createdOn: () => 'CREATED ONNN',
+    tracks: async (parent, { first, after }, ctx) => {
+      console.log('TRACKS', parent, first, after)
 
+      const tracks = await pg('tracks').select('*').where({ channel: parent.dbId })
 
+      return { edges: { tracks } }
+
+    }
   },
   Mutation: {
     async authenticate(_, __, ctx: TContext): Promise<string> {
