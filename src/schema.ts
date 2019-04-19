@@ -6,6 +6,7 @@ import { PubSub } from 'graphql-subscriptions'
 import { TContext } from '../global'
 import { pg, upsert } from './knex'
 import { fromBase26, toBase26 } from './Base26'
+import { isNullOrUndefined } from 'util'
 
 export const pubsub = new PubSub()
 
@@ -37,9 +38,9 @@ const handSchema = gql`
 
   type User {
     id: ID
-    google_id: ID
+    googleId: ID
     email: String
-    email_verified: Boolean
+    emailVerified: Boolean
     picture: String
     fullName: String
     firstName: String
@@ -106,23 +107,36 @@ const handSchema = gql`
 
 
 const resolvers = {
+  User: {
+    // todo: when needed, wrap email behind security
+    email: () => null,
+    googleId: () => null,
+    emailVerified: () => null,
+    fullName: ({ first_name, last_name }) => `${first_name} ${last_name}`,
+    firstName: ({ first_name }) => first_name,
+    lastName: ({ last_name }) => last_name
+  },
+  Track: {
+    owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner)
+  },
   Query: {
     channel: async (_, { id }, ctx) => {
       const dbId = fromBase26(id)
       const [channelRow] = await pg('channels').select('*').where({ id: dbId })
-
       return { ...channelRow, id, dbId }
     }
   },
   Channel: {
     createdOn: () => 'CREATED ONNN',
+    owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
     tracks: async (parent, { first, after }, ctx) => {
-      console.log('TRACKS', parent, first, after)
+      console.log('PARENT', parent)
 
       const tracks = await pg('tracks').select('*').where({ channel: parent.dbId })
 
-      return { edges: { tracks } }
+      const edges = tracks.map(track => ({ cursor: track.id, node: track }))
 
+      return { totalCount: tracks.length, edges }
     }
   },
   Mutation: {
@@ -151,7 +165,12 @@ const resolvers = {
 
       return upsertResponse.id
     },
-    async videoPush(_, { input: { channel, videoId, title } }: GQL.IVideoPushOnMutationArguments, ctx: TContext) {
+    async videoPush(_, { input: { channel, videoId, title } }
+      :
+      GQL.IVideoPushOnMutationArguments, ctx
+                      :
+                      TContext
+    ) {
 
       const videoAddedResponse = await pg('tracks').insert({
         channel: fromBase26(channel),
@@ -165,8 +184,15 @@ const resolvers = {
       pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId, channel } })
 
       return ''
-    },
-    async channelCreate(_, { input: { channelName } }: GQL.IChannelCreateOnMutationArguments, ctx: TContext): Promise<string> {
+    }
+    ,
+    async channelCreate(_, { input: { channelName } }
+      :
+      GQL.IChannelCreateOnMutationArguments, ctx
+                          :
+                          TContext
+    ):
+      Promise<string> {
       const [newChannelResp] = await pg('channels').insert({
         name: channelName,
         owner: pg('users').select('id').where({ google_id: ctx.user.sub })
@@ -174,7 +200,10 @@ const resolvers = {
 
       return toBase26(newChannelResp)
     },
-    async channelJoin(_, { input: { channelId } }: GQL.IChannelJoinOnMutationArguments) {
+    async channelJoin(_, { input: { channelId } }
+      :
+      GQL.IChannelJoinOnMutationArguments
+    ) {
       const channelIdAsNumber = fromBase26(channelId)
       const [resp] = await pg('channels').select().where({ id: channelIdAsNumber })
       return resp

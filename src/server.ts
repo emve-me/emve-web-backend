@@ -1,7 +1,22 @@
 import { ApolloServer, gql } from 'apollo-server'
 import { schema } from './schema'
-import { now } from './knex'
+import { now, pg } from './knex'
 import jwt from 'jsonwebtoken'
+import DataLoader from 'dataloader'
+
+
+const getUsers = async (keys) => {
+  console.log('GET KEYS', keys)
+  const r = await pg('users').select('*').whereIn('id', keys)
+  return r
+}
+
+function createLoaders({ user }: { user? }) {
+  return {
+    users: new DataLoader<number, any>(keys => getUsers(keys))
+  }
+}
+
 
 const server = new ApolloServer({
   schema, cors: true,
@@ -27,15 +42,23 @@ const server = new ApolloServer({
 
     if (connection) {
       // Use this to authenticate context, connection.context
+
+
+      return { loaders: createLoaders({}) }
+
     } else if (req) {
       const { authorization } = req.headers
 
       if (authorization) {
-        return { user: jwt.decode(authorization.replace('Bearer ', '')) }
+        const user = jwt.decode(authorization.replace('Bearer ', ''))
+        const loaders = createLoaders({ user })
+        return { loaders, user }
       }
     }
 
-    return {}
+    // unauthenticated
+    const loaders = createLoaders({})
+    return { loaders }
   }
 })
 

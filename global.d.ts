@@ -1,4 +1,7 @@
+import DataLoader from 'dataloader'
+
 export type TContext = {
+  loaders: { users: DataLoader<number, any> }
   user: {
     iss
     azp
