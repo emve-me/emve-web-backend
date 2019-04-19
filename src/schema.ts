@@ -48,11 +48,20 @@ const handSchema = gql`
     created_on: String
   }
 
-  type Channel {
-    id:ID
-    createdOn:String
-    name:String
-    owner:User
+  type TracksEdge {
+    node: Track
+    cursor: ID
+  }
+
+  type Tracks {
+    totalCount: Int
+    edges: [TracksEdge]
+    pageInfo: TrackPageInfo
+  }
+
+  type TrackPageInfo {
+    endCursor: ID
+    hasNextPage: Boolean
   }
 
   type Track {
@@ -61,10 +70,19 @@ const handSchema = gql`
     title: String
     owner: User
     channel: Channel
-    addedOn: String 
+    addedOn: String
     played: Boolean
   }
 
+
+  type Channel {
+    id:ID
+    createdOn:String
+    name:String
+    owner:User
+    tracks (first: Int, after: ID ):Tracks
+  }
+  
   type Query {
     videos: [ID]
   }
