@@ -21,8 +21,6 @@
   },
   "homepage": "https://github.com/rlancer/emve-gql-server#readme",
   "dependencies": {
-    "@types/jsonwebtoken": "^8.3.2",
-    "@types/shortid": "0.0.29",
     "apollo-server": "^2.4.8",
     "dotenv": "^7.0.0",
     "gapi-to-graphql": "^2.0.5",
@@ -30,10 +28,11 @@
     "graphql-subscriptions": "^1.1.0",
     "jsonwebtoken": "^8.5.1",
     "knex": "^0.16.5",
-    "pg": "^7.10.0",
-    "shortid": "^2.2.14"
+    "pg": "^7.10.0"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^8.3.2",
+    "@types/shortid": "0.0.29",
     "apollo": "^2.8.3",
     "gql-schema-dl": "0.0.5",
     "gql2ts": "^1.10.1",

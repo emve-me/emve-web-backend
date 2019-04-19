@@ -1,18 +1,13 @@
-import { gql } from 'apollo-server'
+import { gql, withFilter } from 'apollo-server'
 import gapiToGraphQL from 'gapi-to-graphql'
 import YouTubeAPI from 'gapi-to-graphql/google_apis/youtube-v3'
 import { makeExecutableSchema, mergeSchemas, IResolvers } from 'graphql-tools'
 import { PubSub } from 'graphql-subscriptions'
 import { TContext } from '../global'
 import { pg, upsert } from './knex'
-import shortid from 'shortid'
 import { fromBase26, toBase26 } from './Base26'
 
-
 export const pubsub = new PubSub()
-
-const videos = []
-
 
 const handSchema = gql`
   schema {
@@ -29,9 +24,6 @@ const handSchema = gql`
   type Video {
     id: ID
   }
-
-
-
 
   input ChannelCreateInput {
     channelName: String
@@ -72,8 +64,12 @@ const handSchema = gql`
     channelJoin(input:ChannelJoinInput!):Channel
   }
 
+  input VideoPushedInput {
+    channel:ID
+  }
+
   type Subscription {
-    videoPushed: Video
+    videoPushed(input:VideoPushedInput!): Video
   }
 `
 
@@ -86,7 +82,6 @@ const resolvers = {
   },
   Mutation: {
     async authenticate(_, __, ctx: TContext): Promise<string> {
-
       const {
         sub: google_id,
         email,
@@ -96,7 +91,6 @@ const resolvers = {
         family_name: last_name,
         locale
       } = ctx.user
-
 
       const upsertResponse = await upsert({
         table: 'users', object: {
@@ -114,12 +108,10 @@ const resolvers = {
     },
     videoPush(_, { input: { channel, videoId } }: GQL.IVideoPushOnMutationArguments, ctx: TContext) {
 
-      console.log('video push', ctx)
+      // add video to channel via tracks
 
+      pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId, channel } })
 
-      //  videos.push({ videoId, channel })
-      //  pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId } })
-      //  return videoId
       return ''
     },
     async channelCreate(_, { input: { channelName } }: GQL.IChannelCreateOnMutationArguments, ctx: TContext): Promise<string> {
@@ -131,22 +123,20 @@ const resolvers = {
       return toBase26(newChannelResp)
     },
     async channelJoin(_, { input: { channelId } }: GQL.IChannelJoinOnMutationArguments) {
-      console.log(channelId)
-
       const channelIdAsNumber = fromBase26(channelId)
-
-      const resp = await pg('channels').select().where({ id: channelIdAsNumber })
-
-      // return channelId
+      const [resp] = await pg('channels').select().where({ id: channelIdAsNumber })
       return resp
-
-
     }
   },
 
   Subscription: {
     videoPushed: {
-      subscribe: () => pubsub.asyncIterator('VIDEO_ADDED')
+      subscribe: withFilter(
+        () => pubsub.asyncIterator('VIDEO_ADDED'),
+        (payload, variables) => {
+          return payload.videoPushed.channel === variables.input.channel
+        }
+      )
     }
   }
 
@@ -168,7 +158,7 @@ const schema2 = makeExecutableSchema({
 })
 
 const newschema = mergeSchemas({
-  schemas: [schema1, schema2],
+  schemas: [schema1, schema2]
 
 })
 

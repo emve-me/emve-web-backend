@@ -2,9 +2,7 @@ const abc = 'LDZETHIJKUQCGASMWVOYPRXNBF'.split('')
 
 const charCode = (char: string) => {
   char = char.toUpperCase()
-  const r = abc.findIndex(c => c === char) + 1
-  console.log(char, r)
-  return r
+  return abc.findIndex(c => c === char) + 1
 }
 
 export const fromBase26 = (alpha: string): number => {
