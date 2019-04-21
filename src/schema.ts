@@ -6,7 +6,6 @@ import { PubSub } from 'graphql-subscriptions'
 import { TContext } from '../global'
 import { pg, upsert } from './knex'
 import { fromBase26, toBase26 } from './Base26'
-import { isNullOrUndefined } from 'util'
 
 export const pubsub = new PubSub()
 
@@ -67,7 +66,7 @@ const handSchema = gql`
 
   type Track {
     id: ID
-    video_id: ID
+    videoId: ID
     title: String
     owner: User
     channel: Channel
@@ -81,7 +80,7 @@ const handSchema = gql`
     createdOn:String
     name:String
     owner:User
-    tracks (first: Int, after: ID ):Tracks
+    tracks (first: Int, after: ID, played: Boolean):Tracks
   }
 
   type Query {
@@ -93,6 +92,7 @@ const handSchema = gql`
     channelCreate(input: ChannelCreateInput!): ID
     videoPush(input: VideoPushInput!): ID
     authenticate:ID
+    markTrackAsPlayed(track:ID!): ID
     channelJoin(input:ChannelJoinInput!):Channel
   }
 
@@ -117,7 +117,8 @@ const resolvers = {
     lastName: ({ last_name }) => last_name
   },
   Track: {
-    owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner)
+    owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
+    videoId: ({ video_id }) => video_id
   },
   Query: {
     channel: async (_, { id }, ctx) => {
@@ -129,10 +130,17 @@ const resolvers = {
   Channel: {
     createdOn: () => 'CREATED ONNN',
     owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
-    tracks: async (parent, { first, after }, ctx) => {
+    tracks: async (parent, { first, after, played }, ctx) => {
       console.log('PARENT', parent)
 
-      const tracks = await pg('tracks').select('*').where({ channel: parent.dbId })
+      const whereClause: { channel: string, played?: boolean } = { channel: parent.dbId }
+
+      if (played !== undefined) {
+        whereClause.played = played
+      }
+
+
+      const tracks = await pg('tracks').select('*').where(whereClause).orderBy('added_on', 'asc')
 
       const edges = tracks.map(track => ({ cursor: track.id, node: track }))
 
@@ -140,6 +148,13 @@ const resolvers = {
     }
   },
   Mutation: {
+    markTrackAsPlayed: (parent, id, ctx) => {
+
+      // get track // get channel from track // see if channel is owned by tgit a
+//
+   //   pg('tracks').update({}).
+
+    },
     async authenticate(_, __, ctx: TContext): Promise<string> {
       const {
         sub: google_id,
@@ -180,6 +195,7 @@ const resolvers = {
       })
 
       console.log(videoAddedResponse)
+
 
       pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId, channel } })
 
