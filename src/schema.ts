@@ -200,8 +200,9 @@ const resolvers = {
         owner: pg('users').select('id').where({ google_id: ctx.user.sub })
       }).returning('*')
 
-      console.log(videoAddedResponse)
+      console.log({ videoAddedResponse })
 
+      videoAddedResponse.channel = channel
       pubsub.publish('VIDEO_ADDED', { videoPushed: videoAddedResponse })
 
       return videoAddedResponse
@@ -236,6 +237,8 @@ const resolvers = {
       subscribe: withFilter(
         () => pubsub.asyncIterator('VIDEO_ADDED'),
         (payload, variables) => {
+
+          console.log('subscribe', { payload, variables })
           return payload.videoPushed.channel === variables.input.channel
         }
       )
