@@ -139,21 +139,33 @@ const resolvers = {
         whereClause.played = played
       }
 
-
       const tracks = await pg('tracks').select('*').where(whereClause).orderBy('added_on', 'asc')
-
       const edges = tracks.map(track => ({ cursor: track.id, node: track }))
 
       return { totalCount: tracks.length, edges }
     }
   },
   Mutation: {
-    markTrackAsPlayed: (parent, id, ctx) => {
+    markTrackAsPlayed: async (parent, { track }, ctx: TContext) => {
+
 
       // get track // get channel from track // see if channel is owned by tgit a
 //
-   //   pg('tracks').update({}).
 
+
+      // query makes sure that only the owner of the channel can mark the track as played
+
+      const channelsOwner = pg('channels').select('id').where({
+        id: pg.raw('tracks.channel'),
+        owner: pg('users').select('id').where({ google_id: ctx.user.sub })
+      })
+
+      const updateResp = await pg('tracks').update({ played: true }).where({
+        id: track,
+        channel: channelsOwner
+      })
+
+      console.log(updateResp)
     },
     async authenticate(_, __, ctx: TContext): Promise<string> {
       const {
@@ -236,7 +248,6 @@ const resolvers = {
       )
     }
   }
-
 }
 
 const { schema: ytSchema, resolvers: ytResolvers } = gapiToGraphQL({ gapiAsJsonSchema: YouTubeAPI })
