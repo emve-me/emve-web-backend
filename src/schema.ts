@@ -23,10 +23,6 @@ const handSchema = gql`
     time: Int
   }
 
-  type Video {
-    id: ID
-  }
-
   input ChannelCreateInput {
     channelName: String
   }
@@ -90,7 +86,7 @@ const handSchema = gql`
 
   type Mutation {
     channelCreate(input: ChannelCreateInput!): ID
-    videoPush(input: VideoPushInput!): ID
+    videoPush(input: VideoPushInput!): Track
     authenticate:ID
     markTrackAsPlayed(track:ID!): ID
     channelJoin(input:ChannelJoinInput!):Channel
@@ -101,7 +97,7 @@ const handSchema = gql`
   }
 
   type Subscription {
-    videoPushed(input:VideoPushedInput!): Video
+    videoPushed(input:VideoPushedInput!): Track
   }
 `
 
@@ -148,11 +144,7 @@ const resolvers = {
   Mutation: {
     markTrackAsPlayed: async (parent, { track }, ctx: TContext) => {
 
-
       // get track // get channel from track // see if channel is owned by tgit a
-//
-
-
       // query makes sure that only the owner of the channel can mark the track as played
 
       const channelsOwner = pg('channels').select('id').where({
@@ -166,6 +158,8 @@ const resolvers = {
       })
 
       console.log(updateResp)
+
+      return track
     },
     async authenticate(_, __, ctx: TContext): Promise<string> {
       const {
@@ -199,19 +193,18 @@ const resolvers = {
                       TContext
     ) {
 
-      const videoAddedResponse = await pg('tracks').insert({
+      const [videoAddedResponse] = await pg('tracks').insert({
         channel: fromBase26(channel),
         video_id: videoId,
         title,
         owner: pg('users').select('id').where({ google_id: ctx.user.sub })
-      })
+      }).returning('*')
 
       console.log(videoAddedResponse)
 
+      pubsub.publish('VIDEO_ADDED', { videoPushed: videoAddedResponse })
 
-      pubsub.publish('VIDEO_ADDED', { videoPushed: { id: videoId, channel } })
-
-      return ''
+      return videoAddedResponse
     }
     ,
     async channelCreate(_, { input: { channelName } }
