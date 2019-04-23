@@ -41,7 +41,7 @@ const handSchema = gql`
     firstName: String
     lastName: String
     locale: String
-    created_on: String
+    createdOn: String
   }
 
   type TracksEdge {
@@ -136,6 +136,7 @@ const resolvers = {
       }
 
       const tracks = await pg('tracks').select('*').where(whereClause).orderBy('added_on', 'asc')
+      console.log('TRACKS', whereClause, tracks)
       const edges = tracks.map(track => ({ cursor: track.id, node: track }))
 
       return { totalCount: tracks.length, edges }
@@ -152,12 +153,17 @@ const resolvers = {
         owner: pg('users').select('id').where({ google_id: ctx.user.sub })
       })
 
-      const updateResp = await pg('tracks').update({ played: true }).where({
+      const updateQuery = pg('tracks').update({ played: true }).where({
         id: track,
         channel: channelsOwner
-      })
+      }).returning('*')
 
-      console.log(updateResp)
+
+      const updateResp = await updateQuery
+
+      if (updateResp.length === 0) {
+        throw 'Unable to mark track as played, please make sure your viewing the right party under the right Google Account'
+      }
 
       return track
     },
