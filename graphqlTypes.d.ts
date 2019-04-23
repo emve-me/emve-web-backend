@@ -23,7 +23,7 @@ declare namespace GQL {
   interface IQuery {
     __typename: 'Query';
     YoutubeApi: IYoutubeResources | null;
-    videos: Array<string | null> | null;
+    channel: IChannel | null;
   }
 
   interface IYoutubeApiOnQueryArguments {
@@ -62,6 +62,10 @@ declare namespace GQL {
      * Deprecated. Please use quotaUser instead.
      */
     userIp?: string | null;
+  }
+
+  interface IChannelOnQueryArguments {
+    id: string;
   }
 
   const enum AltRootEnumParam {
@@ -1349,22 +1353,67 @@ declare namespace GQL {
     __typename: 'Channel';
     id: string | null;
     createdOn: string | null;
+    track: ITrack | null;
     name: string | null;
     owner: IUser | null;
+    tracks: ITracks | null;
+    nowPlaying: ITrack | null;
+  }
+
+  interface ITracksOnChannelArguments {
+    first?: number | null;
+    after?: string | null;
+    played?: boolean | null;
+  }
+
+  interface ITrack {
+    __typename: 'Track';
+    id: string | null;
+    videoId: string | null;
+    title: string | null;
+    owner: IUser | null;
+    channel: IChannel | null;
+    addedOn: string | null;
+    state: TrackState | null;
   }
 
   interface IUser {
     __typename: 'User';
     id: string | null;
-    google_id: string | null;
+    googleId: string | null;
     email: string | null;
-    email_verified: boolean | null;
+    emailVerified: boolean | null;
     picture: string | null;
     fullName: string | null;
     firstName: string | null;
     lastName: string | null;
     locale: string | null;
-    created_on: string | null;
+    createdOn: string | null;
+  }
+
+  const enum TrackState {
+    playing = 'playing',
+    played = 'played',
+    upcoming = 'upcoming'
+  }
+
+  interface ITracks {
+    __typename: 'Tracks';
+    totalCount: number | null;
+    edges: Array<ITracksEdge | null> | null;
+    pageInfo: ITrackPageInfo | null;
+  }
+
+  interface ITracksEdge {
+    __typename: 'TracksEdge';
+    node: ITrack | null;
+    cursor: string | null;
+  }
+
+  interface ITrackPageInfo {
+    __typename: 'TrackPageInfo';
+    endCursor: string | null;
+    hasNextPage: boolean | null;
   }
 
   interface ICommentThreads {
@@ -4989,11 +5038,11 @@ declare namespace GQL {
      * The subscriberSnippet object contains basic details about the sbuscriber.
      */
     subscriberSnippet: ISubscriptionSubscriberSnippet | null;
-    videoPushed: IVideo | null;
+    trackUpdated: ITrack | null;
   }
 
-  interface IVideoPushedOnSubscriptionArguments {
-    input: IVideoPushedInput;
+  interface ITrackUpdatedOnSubscriptionArguments {
+    input: ITrackUpdatedInput;
   }
 
   /**
@@ -5089,13 +5138,8 @@ declare namespace GQL {
     title: string | null;
   }
 
-  interface IVideoPushedInput {
+  interface ITrackUpdatedInput {
     channel?: string | null;
-  }
-
-  interface IVideo {
-    __typename: 'Video';
-    id: string | null;
   }
 
   interface ISuperChatEvents {
@@ -5758,39 +5802,595 @@ declare namespace GQL {
     visitorId: string | null;
   }
 
-  interface IMutation {
-    __typename: 'Mutation';
-    channelCreate: string | null;
-    videoPush: string | null;
-    authenticate: string | null;
-    channelJoin: IChannel | null;
+  /**
+   * A video resource represents a YouTube video.
+   */
+  interface IVideo {
+    __typename: 'Video';
+
+    /**
+     * Age restriction details related to a video. This data can only be retrieved by the video owner.
+     */
+    ageGating: IVideoAgeGating | null;
+
+    /**
+     * The contentDetails object contains information about the video content,
+     * including the length of the video and its aspect ratio.
+     */
+    contentDetails: IVideoContentDetails | null;
+
+    /**
+     * Etag of this resource.
+     */
+    etag: string | null;
+
+    /**
+     * The fileDetails object encapsulates information about the video file that was
+     * uploaded to YouTube, including the file's resolution, duration, audio and
+     * video codecs, stream bitrates, and more. This data can only be retrieved by
+     * the video owner.
+     */
+    fileDetails: IVideoFileDetails | null;
+
+    /**
+     * The ID that YouTube uses to uniquely identify the video.
+     */
+    id: string | null;
+
+    /**
+     * Identifies what kind of resource this is. Value: the fixed string "youtube#video".
+     */
+    kind: string | null;
+
+    /**
+     * The liveStreamingDetails object contains metadata about a live video
+     * broadcast. The object will only be present in a video resource if the video is
+     * an upcoming, live, or completed live broadcast.
+     */
+    liveStreamingDetails: IVideoLiveStreamingDetails | null;
+
+    /**
+     * The monetizationDetails object encapsulates information about the monetization status of the video.
+     */
+    monetizationDetails: IVideoMonetizationDetails | null;
+
+    /**
+     * The player object contains information that you would use to play the video in an embedded player.
+     */
+    player: IVideoPlayer | null;
+
+    /**
+     * The processingDetails object encapsulates information about YouTube's progress
+     * in processing the uploaded video file. The properties in the object identify
+     * the current processing status and an estimate of the time remaining until
+     * YouTube finishes processing the video. This part also indicates whether
+     * different types of data or content, such as file details or thumbnail images,
+     * are available for the video.
+     *
+     * The processingProgress object is designed to be polled so that the video
+     * uploaded can track the progress that YouTube has made in processing the
+     * uploaded video file. This data can only be retrieved by the video owner.
+     */
+    processingDetails: IVideoProcessingDetails | null;
+
+    /**
+     * The projectDetails object contains information about the project specific video metadata.
+     */
+    projectDetails: IVideoProjectDetails | null;
+
+    /**
+     * The recordingDetails object encapsulates information about the location, date and address where the video was recorded.
+     */
+    recordingDetails: IVideoRecordingDetails | null;
+
+    /**
+     * The snippet object contains basic details about the video, such as its title, description, and category.
+     */
+    snippet: IVideoSnippet | null;
+
+    /**
+     * The statistics object contains statistics about the video.
+     */
+    statistics: IVideoStatistics | null;
+
+    /**
+     * The status object contains information about the video's uploading, processing, and privacy statuses.
+     */
+    status: IVideoStatus | null;
+
+    /**
+     * The suggestions object encapsulates suggestions that identify opportunities to
+     * improve the video quality or the metadata for the uploaded video. This data
+     * can only be retrieved by the video owner.
+     */
+    suggestions: IVideoSuggestions | null;
+
+    /**
+     * The topicDetails object encapsulates information about Freebase topics associated with the video.
+     */
+    topicDetails: IVideoTopicDetails | null;
   }
 
-  interface IChannelCreateOnMutationArguments {
-    input: IChannelCreateInput;
+  interface IVideoAgeGating {
+    __typename: 'VideoAgeGating';
+
+    /**
+     * Indicates whether or not the video has alcoholic beverage content. Only users
+     * of legal purchasing age in a particular country, as identified by ICAP, can
+     * view the content.
+     */
+    alcoholContent: boolean | null;
+
+    /**
+     * Age-restricted trailers. For redband trailers and adult-rated video-games.
+     * Only users aged 18+ can view the content. The the field is true the content is
+     * restricted to viewers aged 18+. Otherwise The field won't be present.
+     */
+    restricted: boolean | null;
+
+    /**
+     * Video game rating, if any.
+     */
+    videoGameRating: string | null;
   }
 
-  interface IVideoPushOnMutationArguments {
-    input: IVideoPushInput;
+  /**
+   * Details about the content of a YouTube Video.
+   */
+  interface IVideoContentDetails {
+    __typename: 'VideoContentDetails';
+
+    /**
+     * The value of captions indicates whether the video has captions or not.
+     */
+    caption: string | null;
+
+    /**
+     * Specifies the ratings that the video received under various rating schemes.
+     */
+    contentRating: IContentRating | null;
+
+    /**
+     * The countryRestriction object contains information about the countries where a video is (or is not) viewable.
+     */
+    countryRestriction: IAccessPolicy | null;
+
+    /**
+     * The value of definition indicates whether the video is available in high definition or only in standard definition.
+     */
+    definition: string | null;
+
+    /**
+     * The value of dimension indicates whether the video is available in 3D or in 2D.
+     */
+    dimension: string | null;
+
+    /**
+     * The length of the video. The tag value is an ISO 8601 duration in the format
+     * PT#M#S, in which the letters PT indicate that the value specifies a period of
+     * time, and the letters M and S refer to length in minutes and seconds,
+     * respectively. The # characters preceding the M and S letters are both integers
+     * that specify the number of minutes (or seconds) of the video. For example, a
+     * value of PT15M51S indicates that the video is 15 minutes and 51 seconds long.
+     */
+    duration: string | null;
+
+    /**
+     * Indicates whether the video uploader has provided a custom thumbnail image for
+     * the video. This property is only visible to the video uploader.
+     */
+    hasCustomThumbnail: boolean | null;
+
+    /**
+     * The value of is_license_content indicates whether the video is licensed content.
+     */
+    licensedContent: boolean | null;
+
+    /**
+     * Specifies the projection format of the video.
+     */
+    projection: string | null;
+
+    /**
+     * The regionRestriction object contains information about the countries where a
+     * video is (or is not) viewable. The object will contain either the
+     * contentDetails.regionRestriction.allowed property or the
+     * contentDetails.regionRestriction.blocked property.
+     */
+    regionRestriction: IVideoContentDetailsRegionRestriction | null;
   }
 
-  interface IChannelJoinOnMutationArguments {
-    input: IChannelJoinInput;
+  /**
+   * Ratings schemes. The country-specific ratings are mostly for movies and shows. NEXT_ID: 71
+   */
+  interface IContentRating {
+    __typename: 'ContentRating';
+
+    /**
+     * The video's Australian Classification Board (ACB) or Australian Communications
+     * and Media Authority (ACMA) rating. ACMA ratings are used to classify
+     * children's television programming.
+     */
+    acbRating: string | null;
+
+    /**
+     * The video's rating from Italy's Autorità per le Garanzie nelle Comunicazioni (AGCOM).
+     */
+    agcomRating: string | null;
+
+    /**
+     * The video's Anatel (Asociación Nacional de Televisión) rating for Chilean television.
+     */
+    anatelRating: string | null;
+
+    /**
+     * The video's British Board of Film Classification (BBFC) rating.
+     */
+    bbfcRating: string | null;
+
+    /**
+     * The video's rating from Thailand's Board of Film and Video Censors.
+     */
+    bfvcRating: string | null;
+
+    /**
+     * The video's rating from the Austrian Board of Media Classification (Bundesministerium für Unterricht, Kunst und Kultur).
+     */
+    bmukkRating: string | null;
+
+    /**
+     * Rating system for Canadian TV - Canadian TV Classification System The video's
+     * rating from the Canadian Radio-Television and Telecommunications Commission
+     * (CRTC) for Canadian English-language broadcasts. For more information, see the
+     * Canadian Broadcast Standards Council website.
+     */
+    catvRating: string | null;
+
+    /**
+     * The video's rating from the Canadian Radio-Television and Telecommunications
+     * Commission (CRTC) for Canadian French-language broadcasts. For more
+     * information, see the Canadian Broadcast Standards Council website.
+     */
+    catvfrRating: string | null;
+
+    /**
+     * The video's Central Board of Film Certification (CBFC - India) rating.
+     */
+    cbfcRating: string | null;
+
+    /**
+     * The video's Consejo de Calificación Cinematográfica (Chile) rating.
+     */
+    cccRating: string | null;
+
+    /**
+     * The video's rating from Portugal's Comissão de Classificação de Espect´culos.
+     */
+    cceRating: string | null;
+
+    /**
+     * The video's rating in Switzerland.
+     */
+    chfilmRating: string | null;
+
+    /**
+     * The video's Canadian Home Video Rating System (CHVRS) rating.
+     */
+    chvrsRating: string | null;
+
+    /**
+     * The video's rating from the Commission de Contrôle des Films (Belgium).
+     */
+    cicfRating: string | null;
+
+    /**
+     * The video's rating from Romania's CONSILIUL NATIONAL AL AUDIOVIZUALULUI (CNA).
+     */
+    cnaRating: string | null;
+
+    /**
+     * Rating system in France - Commission de classification cinematographique
+     */
+    cncRating: string | null;
+
+    /**
+     * The video's rating from France's Conseil supérieur de l?audiovisuel, which rates broadcast content.
+     */
+    csaRating: string | null;
+
+    /**
+     * The video's rating from Luxembourg's Commission de surveillance de la classification des films (CSCF).
+     */
+    cscfRating: string | null;
+
+    /**
+     * The video's rating in the Czech Republic.
+     */
+    czfilmRating: string | null;
+
+    /**
+     * The video's Departamento de Justiça, Classificação, Qualificação e Títulos (DJCQT - Brazil) rating.
+     */
+    djctqRating: string | null;
+
+    /**
+     * Reasons that explain why the video received its DJCQT (Brazil) rating.
+     */
+    djctqRatingReasons: DjctqRatingReasons | null;
+
+    /**
+     * Rating system in Turkey - Evaluation and Classification Board of the Ministry of Culture and Tourism
+     */
+    ecbmctRating: string | null;
+
+    /**
+     * The video's rating in Estonia.
+     */
+    eefilmRating: string | null;
+
+    /**
+     * The video's rating in Egypt.
+     */
+    egfilmRating: string | null;
+
+    /**
+     * The video's Eirin (映倫) rating. Eirin is the Japanese rating system.
+     */
+    eirinRating: string | null;
+
+    /**
+     * The video's rating from Malaysia's Film Censorship Board.
+     */
+    fcbmRating: string | null;
+
+    /**
+     * The video's rating from Hong Kong's Office for Film, Newspaper and Article Administration.
+     */
+    fcoRating: string | null;
+
+    /**
+     * This property has been deprecated. Use the contentDetails.contentRating.cncRating instead.
+     */
+    fmocRating: string | null;
+
+    /**
+     * The video's rating from South Africa's Film and Publication Board.
+     */
+    fpbRating: string | null;
+
+    /**
+     * Reasons that explain why the video received its FPB (South Africa) rating.
+     */
+    fpbRatingReasons: FpbRatingReasons | null;
+
+    /**
+     * The video's Freiwillige Selbstkontrolle der Filmwirtschaft (FSK - Germany) rating.
+     */
+    fskRating: string | null;
+
+    /**
+     * The video's rating in Greece.
+     */
+    grfilmRating: string | null;
+
+    /**
+     * The video's Instituto de la Cinematografía y de las Artes Audiovisuales (ICAA - Spain) rating.
+     */
+    icaaRating: string | null;
+
+    /**
+     * The video's Irish Film Classification Office (IFCO - Ireland) rating. See the IFCO website for more information.
+     */
+    ifcoRating: string | null;
+
+    /**
+     * The video's rating in Israel.
+     */
+    ilfilmRating: string | null;
+
+    /**
+     * The video's INCAA (Instituto Nacional de Cine y Artes Audiovisuales - Argentina) rating.
+     */
+    incaaRating: string | null;
+
+    /**
+     * The video's rating from the Kenya Film Classification Board.
+     */
+    kfcbRating: string | null;
+
+    /**
+     * voor de Classificatie van Audiovisuele Media (Netherlands).
+     */
+    kijkwijzerRating: string | null;
+
+    /**
+     * The video's Korea Media Rating Board (영상물등급위원회) rating. The KMRB rates videos in South Korea.
+     */
+    kmrbRating: string | null;
+
+    /**
+     * The video's rating from Indonesia's Lembaga Sensor Film.
+     */
+    lsfRating: string | null;
+
+    /**
+     * The video's rating from Malta's Film Age-Classification Board.
+     */
+    mccaaRating: string | null;
+
+    /**
+     * The video's rating from the Danish Film Institute's (Det Danske Filminstitut) Media Council for Children and Young People.
+     */
+    mccypRating: string | null;
+
+    /**
+     * The video's rating system for Vietnam - MCST
+     */
+    mcstRating: string | null;
+
+    /**
+     * The video's rating from Singapore's Media Development Authority (MDA) and, specifically, it's Board of Film Censors (BFC).
+     */
+    mdaRating: string | null;
+
+    /**
+     * The video's rating from Medietilsynet, the Norwegian Media Authority.
+     */
+    medietilsynetRating: string | null;
+
+    /**
+     * The video's rating from Finland's Kansallinen Audiovisuaalinen Instituutti (National Audiovisual Institute).
+     */
+    mekuRating: string | null;
+
+    /**
+     * The rating system for MENA countries, a clone of MPAA. It is needed to
+     */
+    menaMpaaRating: string | null;
+
+    /**
+     * The video's rating from the Ministero dei Beni e delle Attività Culturali e del Turismo (Italy).
+     */
+    mibacRating: string | null;
+
+    /**
+     * The video's Ministerio de Cultura (Colombia) rating.
+     */
+    mocRating: string | null;
+
+    /**
+     * The video's rating from Taiwan's Ministry of Culture (文化部).
+     */
+    moctwRating: string | null;
+
+    /**
+     * The video's Motion Picture Association of America (MPAA) rating.
+     */
+    mpaaRating: string | null;
+
+    /**
+     * The rating system for trailer, DVD, and Ad in the US. See http://movielabs.com/md/ratings/v2.3/html/US_MPAAT_Ratings.html.
+     */
+    mpaatRating: string | null;
+
+    /**
+     * The video's rating from the Movie and Television Review and Classification Board (Philippines).
+     */
+    mtrcbRating: string | null;
+
+    /**
+     * The video's rating from the Maldives National Bureau of Classification.
+     */
+    nbcRating: string | null;
+
+    /**
+     * The video's rating in Poland.
+     */
+    nbcplRating: string | null;
+
+    /**
+     * The video's rating from the Bulgarian National Film Center.
+     */
+    nfrcRating: string | null;
+
+    /**
+     * The video's rating from Nigeria's National Film and Video Censors Board.
+     */
+    nfvcbRating: string | null;
+
+    /**
+     * The video's rating from the Nacionãlais Kino centrs (National Film Centre of Latvia).
+     */
+    nkclvRating: string | null;
+
+    /**
+     * The video's Office of Film and Literature Classification (OFLC - New Zealand) rating.
+     */
+    oflcRating: string | null;
+
+    /**
+     * The video's rating in Peru.
+     */
+    pefilmRating: string | null;
+
+    /**
+     * The video's rating from the Hungarian Nemzeti Filmiroda, the Rating Committee of the National Office of Film.
+     */
+    rcnofRating: string | null;
+
+    /**
+     * The video's rating in Venezuela.
+     */
+    resorteviolenciaRating: string | null;
+
+    /**
+     * The video's General Directorate of Radio, Television and Cinematography (Mexico) rating.
+     */
+    rtcRating: string | null;
+
+    /**
+     * The video's rating from Ireland's Raidió Teilifís Éireann.
+     */
+    rteRating: string | null;
+
+    /**
+     * The video's National Film Registry of the Russian Federation (MKRF - Russia) rating.
+     */
+    russiaRating: string | null;
+
+    /**
+     * The video's rating in Slovakia.
+     */
+    skfilmRating: string | null;
+
+    /**
+     * The video's rating in Iceland.
+     */
+    smaisRating: string | null;
+
+    /**
+     * The video's rating from Statens medieråd (Sweden's National Media Council).
+     */
+    smsaRating: string | null;
+
+    /**
+     * The video's TV Parental Guidelines (TVPG) rating.
+     */
+    tvpgRating: string | null;
+
+    /**
+     * A rating that YouTube uses to identify age-restricted content.
+     */
+    ytRating: string | null;
   }
 
-  interface IChannelCreateInput {
-    channelName?: string | null;
+  const enum DjctqRatingReasons {
+    djctqCriminalActs = 'djctqCriminalActs',
+    djctqDrugs = 'djctqDrugs',
+    djctqExplicitSex = 'djctqExplicitSex',
+    djctqExtremeViolence = 'djctqExtremeViolence',
+    djctqIllegalDrugs = 'djctqIllegalDrugs',
+    djctqImpactingContent = 'djctqImpactingContent',
+    djctqInappropriateLanguage = 'djctqInappropriateLanguage',
+    djctqLegalDrugs = 'djctqLegalDrugs',
+    djctqNudity = 'djctqNudity',
+    djctqSex = 'djctqSex',
+    djctqSexualContent = 'djctqSexualContent',
+    djctqViolence = 'djctqViolence'
   }
 
-  interface IVideoPushInput {
-    videoId: string;
-    channel: string;
-    title?: string | null;
-    time?: number | null;
-  }
-
-  interface IChannelJoinInput {
-    channelId: string;
+  const enum FpbRatingReasons {
+    fpbBlasphemy = 'fpbBlasphemy',
+    fpbCriminalTechniques = 'fpbCriminalTechniques',
+    fpbDrugs = 'fpbDrugs',
+    fpbHorror = 'fpbHorror',
+    fpbImitativeActsTechniques = 'fpbImitativeActsTechniques',
+    fpbLanguage = 'fpbLanguage',
+    fpbNudity = 'fpbNudity',
+    fpbPrejudice = 'fpbPrejudice',
+    fpbSex = 'fpbSex',
+    fpbSexualViolence = 'fpbSexualViolence',
+    fpbViolence = 'fpbViolence'
   }
 
   /**
@@ -5808,6 +6408,745 @@ declare namespace GQL {
      * A list of region codes that identify countries where the default policy do not apply.
      */
     exception: Array<string | null> | null;
+  }
+
+  /**
+   * DEPRECATED Region restriction of the video.
+   */
+  interface IVideoContentDetailsRegionRestriction {
+    __typename: 'VideoContentDetailsRegionRestriction';
+
+    /**
+     * A list of region codes that identify countries where the video is viewable. If
+     * this property is present and a country is not listed in its value, then the
+     * video is blocked from appearing in that country. If this property is present
+     * and contains an empty list, the video is blocked in all countries.
+     */
+    allowed: Array<string | null> | null;
+
+    /**
+     * A list of region codes that identify countries where the video is blocked. If
+     * this property is present and a country is not listed in its value, then the
+     * video is viewable in that country. If this property is present and contains an
+     * empty list, the video is viewable in all countries.
+     */
+    blocked: Array<string | null> | null;
+  }
+
+  /**
+   * Describes original video file properties, including technical details about
+   * audio and video streams, but also metadata information like content length,
+   * digitization time, or geotagging information.
+   */
+  interface IVideoFileDetails {
+    __typename: 'VideoFileDetails';
+
+    /**
+     * A list of audio streams contained in the uploaded video file. Each item in the
+     * list contains detailed metadata about an audio stream.
+     */
+    audioStreams: Array<IVideoFileDetailsAudioStream | null> | null;
+
+    /**
+     * The uploaded video file's combined (video and audio) bitrate in bits per second.
+     */
+    bitrateBps: string | null;
+
+    /**
+     * The uploaded video file's container format.
+     */
+    container: string | null;
+
+    /**
+     * The date and time when the uploaded video file was created. The value is
+     * specified in ISO 8601 format. Currently, the following ISO 8601 formats are supported:
+     * - Date only: YYYY-MM-DD
+     * - Naive time: YYYY-MM-DDTHH:MM:SS
+     * - Time with timezone: YYYY-MM-DDTHH:MM:SS+HH:MM
+     */
+    creationTime: string | null;
+
+    /**
+     * The length of the uploaded video in milliseconds.
+     */
+    durationMs: string | null;
+
+    /**
+     * The uploaded file's name. This field is present whether a video file or another type of file was uploaded.
+     */
+    fileName: string | null;
+
+    /**
+     * The uploaded file's size in bytes. This field is present whether a video file or another type of file was uploaded.
+     */
+    fileSize: string | null;
+
+    /**
+     * The uploaded file's type as detected by YouTube's video processing engine.
+     * Currently, YouTube only processes video files, but this field is present
+     * whether a video file or another type of file was uploaded.
+     */
+    fileType: string | null;
+
+    /**
+     * A list of video streams contained in the uploaded video file. Each item in the
+     * list contains detailed metadata about a video stream.
+     */
+    videoStreams: Array<IVideoFileDetailsVideoStream | null> | null;
+  }
+
+  /**
+   * Information about an audio stream.
+   */
+  interface IVideoFileDetailsAudioStream {
+    __typename: 'VideoFileDetailsAudioStream';
+
+    /**
+     * The audio stream's bitrate, in bits per second.
+     */
+    bitrateBps: string | null;
+
+    /**
+     * The number of audio channels that the stream contains.
+     */
+    channelCount: number | null;
+
+    /**
+     * The audio codec that the stream uses.
+     */
+    codec: string | null;
+
+    /**
+     * A value that uniquely identifies a video vendor. Typically, the value is a four-letter vendor code.
+     */
+    vendor: string | null;
+  }
+
+  /**
+   * Information about a video stream.
+   */
+  interface IVideoFileDetailsVideoStream {
+    __typename: 'VideoFileDetailsVideoStream';
+
+    /**
+     * The video content's display aspect ratio, which specifies the aspect ratio in which the video should be displayed.
+     */
+    aspectRatio: number | null;
+
+    /**
+     * The video stream's bitrate, in bits per second.
+     */
+    bitrateBps: string | null;
+
+    /**
+     * The video codec that the stream uses.
+     */
+    codec: string | null;
+
+    /**
+     * The video stream's frame rate, in frames per second.
+     */
+    frameRateFps: number | null;
+
+    /**
+     * The encoded video content's height in pixels.
+     */
+    heightPixels: number | null;
+
+    /**
+     * The amount that YouTube needs to rotate the original source content to properly display the video.
+     */
+    rotation: string | null;
+
+    /**
+     * A value that uniquely identifies a video vendor. Typically, the value is a four-letter vendor code.
+     */
+    vendor: string | null;
+
+    /**
+     * The encoded video content's width in pixels. You can calculate the video's
+     * encoding aspect ratio as width_pixels / height_pixels.
+     */
+    widthPixels: number | null;
+  }
+
+  /**
+   * Details about the live streaming metadata.
+   */
+  interface IVideoLiveStreamingDetails {
+    __typename: 'VideoLiveStreamingDetails';
+
+    /**
+     * The ID of the currently active live chat attached to this video. This field is
+     * filled only if the video is a currently live broadcast that has live chat.
+     * Once the broadcast transitions to complete this field will be removed and the
+     * live chat closed down. For persistent broadcasts that live chat id will no
+     * longer be tied to this video but rather to the new video being displayed at
+     * the persistent page.
+     */
+    activeLiveChatId: string | null;
+
+    /**
+     * The time that the broadcast actually ended. The value is specified in ISO 8601
+     * (YYYY-MM-DDThh:mm:ss.sZ) format. This value will not be available until the
+     * broadcast is over.
+     */
+    actualEndTime: string | null;
+
+    /**
+     * The time that the broadcast actually started. The value is specified in ISO
+     * 8601 (YYYY-MM-DDThh:mm:ss.sZ) format. This value will not be available until
+     * the broadcast begins.
+     */
+    actualStartTime: string | null;
+
+    /**
+     * The number of viewers currently watching the broadcast. The property and its
+     * value will be present if the broadcast has current viewers and the broadcast
+     * owner has not hidden the viewcount for the video. Note that YouTube stops
+     * tracking the number of concurrent viewers for a broadcast when the broadcast
+     * ends. So, this property would not identify the number of viewers watching an
+     * archived video of a live broadcast that already ended.
+     */
+    concurrentViewers: string | null;
+
+    /**
+     * The time that the broadcast is scheduled to end. The value is specified in ISO
+     * 8601 (YYYY-MM-DDThh:mm:ss.sZ) format. If the value is empty or the property is
+     * not present, then the broadcast is scheduled to continue indefinitely.
+     */
+    scheduledEndTime: string | null;
+
+    /**
+     * The time that the broadcast is scheduled to begin. The value is specified in ISO 8601 (YYYY-MM-DDThh:mm:ss.sZ) format.
+     */
+    scheduledStartTime: string | null;
+  }
+
+  /**
+   * Details about monetization of a YouTube Video.
+   */
+  interface IVideoMonetizationDetails {
+    __typename: 'VideoMonetizationDetails';
+
+    /**
+     * The value of access indicates whether the video can be monetized or not.
+     */
+    access: IAccessPolicy | null;
+  }
+
+  /**
+   * Player to be used for a video playback.
+   */
+  interface IVideoPlayer {
+    __typename: 'VideoPlayer';
+    embedHeight: string | null;
+
+    /**
+     * An <iframe> tag that embeds a player that will play the video.
+     */
+    embedHtml: string | null;
+
+    /**
+     * The embed width
+     */
+    embedWidth: string | null;
+  }
+
+  /**
+   * Describes processing status and progress and availability of some other Video resource parts.
+   */
+  interface IVideoProcessingDetails {
+    __typename: 'VideoProcessingDetails';
+
+    /**
+     * This value indicates whether video editing suggestions, which might improve
+     * video quality or the playback experience, are available for the video. You can
+     * retrieve these suggestions by requesting the suggestions part in your
+     * videos.list() request.
+     */
+    editorSuggestionsAvailability: string | null;
+
+    /**
+     * This value indicates whether file details are available for the uploaded
+     * video. You can retrieve a video's file details by requesting the fileDetails
+     * part in your videos.list() request.
+     */
+    fileDetailsAvailability: string | null;
+
+    /**
+     * The reason that YouTube failed to process the video. This property will only
+     * have a value if the processingStatus property's value is failed.
+     */
+    processingFailureReason: string | null;
+
+    /**
+     * This value indicates whether the video processing engine has generated
+     * suggestions that might improve YouTube's ability to process the the video,
+     * warnings that explain video processing problems, or errors that cause video
+     * processing problems. You can retrieve these suggestions by requesting the
+     * suggestions part in your videos.list() request.
+     */
+    processingIssuesAvailability: string | null;
+
+    /**
+     * The processingProgress object contains information about the progress YouTube
+     * has made in processing the video. The values are really only relevant if the
+     * video's processing status is processing.
+     */
+    processingProgress: IVideoProcessingDetailsProcessingProgress | null;
+
+    /**
+     * The video's processing status. This value indicates whether YouTube was able
+     * to process the video or if the video is still being processed.
+     */
+    processingStatus: string | null;
+
+    /**
+     * This value indicates whether keyword (tag) suggestions are available for the
+     * video. Tags can be added to a video's metadata to make it easier for other
+     * users to find the video. You can retrieve these suggestions by requesting the
+     * suggestions part in your videos.list() request.
+     */
+    tagSuggestionsAvailability: string | null;
+
+    /**
+     * This value indicates whether thumbnail images have been generated for the video.
+     */
+    thumbnailsAvailability: string | null;
+  }
+
+  /**
+   * Video processing progress and completion time estimate.
+   */
+  interface IVideoProcessingDetailsProcessingProgress {
+    __typename: 'VideoProcessingDetailsProcessingProgress';
+
+    /**
+     * The number of parts of the video that YouTube has already processed. You can
+     * estimate the percentage of the video that YouTube has already processed by calculating:
+     * 100 * parts_processed / parts_total
+     *
+     * Note that since the estimated number of parts could increase without a
+     * corresponding increase in the number of parts that have already been
+     * processed, it is possible that the calculated progress could periodically
+     * decrease while YouTube processes a video.
+     */
+    partsProcessed: string | null;
+
+    /**
+     * An estimate of the total number of parts that need to be processed for the
+     * video. The number may be updated with more precise estimates while YouTube
+     * processes the video.
+     */
+    partsTotal: string | null;
+
+    /**
+     * An estimate of the amount of time, in millseconds, that YouTube needs to finish processing the video.
+     */
+    timeLeftMs: string | null;
+  }
+
+  /**
+   * Project specific details about the content of a YouTube Video.
+   */
+  interface IVideoProjectDetails {
+    __typename: 'VideoProjectDetails';
+
+    /**
+     * A list of project tags associated with the video during the upload.
+     */
+    tags: Array<string | null> | null;
+  }
+
+  /**
+   * Recording information associated with the video.
+   */
+  interface IVideoRecordingDetails {
+    __typename: 'VideoRecordingDetails';
+
+    /**
+     * The geolocation information associated with the video.
+     */
+    location: IGeoPoint | null;
+
+    /**
+     * The text description of the location where the video was recorded.
+     */
+    locationDescription: string | null;
+
+    /**
+     * The date and time when the video was recorded. The value is specified in ISO 8601 (YYYY-MM-DDThh:mm:ss.sssZ) format.
+     */
+    recordingDate: string | null;
+  }
+
+  /**
+   * Geographical coordinates of a point, in WGS84.
+   */
+  interface IGeoPoint {
+    __typename: 'GeoPoint';
+
+    /**
+     * Altitude above the reference ellipsoid, in meters.
+     */
+    altitude: number | null;
+
+    /**
+     * Latitude in degrees.
+     */
+    latitude: number | null;
+
+    /**
+     * Longitude in degrees.
+     */
+    longitude: number | null;
+  }
+
+  /**
+   * Basic details about a video, including title, description, uploader, thumbnails and category.
+   */
+  interface IVideoSnippet {
+    __typename: 'VideoSnippet';
+
+    /**
+     * The YouTube video category associated with the video.
+     */
+    categoryId: string | null;
+
+    /**
+     * The ID that YouTube uses to uniquely identify the channel that the video was uploaded to.
+     */
+    channelId: string | null;
+
+    /**
+     * Channel title for the channel that the video belongs to.
+     */
+    channelTitle: string | null;
+
+    /**
+     * The default_audio_language property specifies the language spoken in the video's default audio track.
+     */
+    defaultAudioLanguage: string | null;
+
+    /**
+     * The language of the videos's default snippet.
+     */
+    defaultLanguage: string | null;
+
+    /**
+     * The video's description.
+     */
+    description: string | null;
+
+    /**
+     * Indicates if the video is an upcoming/active live broadcast. Or it's "none" if
+     * the video is not an upcoming/active live broadcast.
+     */
+    liveBroadcastContent: string | null;
+
+    /**
+     * Localized snippet selected with the hl parameter. If no such localization
+     * exists, this field is populated with the default snippet. (Read-only)
+     */
+    localized: IVideoLocalization | null;
+
+    /**
+     * The date and time that the video was uploaded. The value is specified in ISO 8601 (YYYY-MM-DDThh:mm:ss.sZ) format.
+     */
+    publishedAt: string | null;
+
+    /**
+     * A list of keyword tags associated with the video. Tags may contain spaces.
+     */
+    tags: Array<string | null> | null;
+
+    /**
+     * A map of thumbnail images associated with the video. For each object in the
+     * map, the key is the name of the thumbnail image, and the value is an object
+     * that contains other information about the thumbnail.
+     */
+    thumbnails: IThumbnailDetails | null;
+
+    /**
+     * The video's title.
+     */
+    title: string | null;
+  }
+
+  /**
+   * Localized versions of certain video properties (e.g. title).
+   */
+  interface IVideoLocalization {
+    __typename: 'VideoLocalization';
+
+    /**
+     * Localized version of the video's description.
+     */
+    description: string | null;
+
+    /**
+     * Localized version of the video's title.
+     */
+    title: string | null;
+  }
+
+  /**
+   * Statistics about the video, such as the number of times the video was viewed or liked.
+   */
+  interface IVideoStatistics {
+    __typename: 'VideoStatistics';
+
+    /**
+     * The number of comments for the video.
+     */
+    commentCount: string | null;
+
+    /**
+     * The number of users who have indicated that they disliked the video by giving it a negative rating.
+     */
+    dislikeCount: string | null;
+
+    /**
+     * The number of users who currently have the video marked as a favorite video.
+     */
+    favoriteCount: string | null;
+
+    /**
+     * The number of users who have indicated that they liked the video by giving it a positive rating.
+     */
+    likeCount: string | null;
+
+    /**
+     * The number of times the video has been viewed.
+     */
+    viewCount: string | null;
+  }
+
+  /**
+   * Basic details about a video category, such as its localized title.
+   */
+  interface IVideoStatus {
+    __typename: 'VideoStatus';
+
+    /**
+     * This value indicates if the video can be embedded on another website.
+     */
+    embeddable: boolean | null;
+
+    /**
+     * This value explains why a video failed to upload. This property is only
+     * present if the uploadStatus property indicates that the upload failed.
+     */
+    failureReason: string | null;
+
+    /**
+     * The video's license.
+     */
+    license: string | null;
+
+    /**
+     * The video's privacy status.
+     */
+    privacyStatus: string | null;
+
+    /**
+     * This value indicates if the extended video statistics on the watch page can be
+     * viewed by everyone. Note that the view count, likes, etc will still be visible
+     * if this is disabled.
+     */
+    publicStatsViewable: boolean | null;
+
+    /**
+     * The date and time when the video is scheduled to publish. It can be set only
+     * if the privacy status of the video is private. The value is specified in ISO
+     * 8601 (YYYY-MM-DDThh:mm:ss.sZ) format.
+     */
+    publishAt: string | null;
+
+    /**
+     * This value explains why YouTube rejected an uploaded video. This property is
+     * only present if the uploadStatus property indicates that the upload was rejected.
+     */
+    rejectionReason: string | null;
+
+    /**
+     * The status of the uploaded video.
+     */
+    uploadStatus: string | null;
+  }
+
+  /**
+   * Specifies suggestions on how to improve video content, including encoding hints, tag suggestions, and editor suggestions.
+   */
+  interface IVideoSuggestions {
+    __typename: 'VideoSuggestions';
+
+    /**
+     * A list of video editing operations that might improve the video quality or playback experience of the uploaded video.
+     */
+    editorSuggestions: EditorSuggestions | null;
+
+    /**
+     * A list of errors that will prevent YouTube from successfully processing the
+     * uploaded video video. These errors indicate that, regardless of the video's
+     * current processing status, eventually, that status will almost certainly be failed.
+     */
+    processingErrors: ProcessingErrors | null;
+
+    /**
+     * A list of suggestions that may improve YouTube's ability to process the video.
+     */
+    processingHints: ProcessingHints | null;
+
+    /**
+     * A list of reasons why YouTube may have difficulty transcoding the uploaded
+     * video or that might result in an erroneous transcoding. These warnings are
+     * generated before YouTube actually processes the uploaded video file. In
+     * addition, they identify issues that are unlikely to cause the video processing
+     * to fail but that might cause problems such as sync issues, video artifacts, or
+     * a missing audio track.
+     */
+    processingWarnings: ProcessingWarnings | null;
+
+    /**
+     * A list of keyword tags that could be added to the video's metadata to increase
+     * the likelihood that users will locate your video when searching or browsing on YouTube.
+     */
+    tagSuggestions: Array<IVideoSuggestionsTagSuggestion | null> | null;
+  }
+
+  const enum EditorSuggestions {
+    audioQuietAudioSwap = 'audioQuietAudioSwap',
+    videoAutoLevels = 'videoAutoLevels',
+    videoCrop = 'videoCrop',
+    videoStabilize = 'videoStabilize'
+  }
+
+  const enum ProcessingErrors {
+    archiveFile = 'archiveFile',
+    audioFile = 'audioFile',
+    docFile = 'docFile',
+    imageFile = 'imageFile',
+    notAVideoFile = 'notAVideoFile',
+    projectFile = 'projectFile',
+    unsupportedSpatialAudioLayout = 'unsupportedSpatialAudioLayout'
+  }
+
+  const enum ProcessingHints {
+    hdrVideo = 'hdrVideo',
+    nonStreamableMov = 'nonStreamableMov',
+    sendBestQualityVideo = 'sendBestQualityVideo',
+    spatialAudio = 'spatialAudio',
+    sphericalVideo = 'sphericalVideo',
+    vrVideo = 'vrVideo'
+  }
+
+  const enum ProcessingWarnings {
+    hasEditlist = 'hasEditlist',
+    inconsistentResolution = 'inconsistentResolution',
+    problematicAudioCodec = 'problematicAudioCodec',
+    problematicHdrLookupTable = 'problematicHdrLookupTable',
+    problematicVideoCodec = 'problematicVideoCodec',
+    unknownAudioCodec = 'unknownAudioCodec',
+    unknownContainer = 'unknownContainer',
+    unknownVideoCodec = 'unknownVideoCodec',
+    unsupportedHdrColorMetadata = 'unsupportedHdrColorMetadata',
+    unsupportedHdrPixelFormat = 'unsupportedHdrPixelFormat',
+    unsupportedSphericalProjectionType = 'unsupportedSphericalProjectionType',
+    unsupportedVrStereoMode = 'unsupportedVrStereoMode'
+  }
+
+  /**
+   * A single tag suggestion with it's relevance information.
+   */
+  interface IVideoSuggestionsTagSuggestion {
+    __typename: 'VideoSuggestionsTagSuggestion';
+
+    /**
+     * A set of video categories for which the tag is relevant. You can use this
+     * information to display appropriate tag suggestions based on the video category
+     * that the video uploader associates with the video. By default, tag suggestions
+     * are relevant for all categories if there are no restricts defined for the keyword.
+     */
+    categoryRestricts: Array<string | null> | null;
+
+    /**
+     * The keyword tag suggested for the video.
+     */
+    tag: string | null;
+  }
+
+  /**
+   * Freebase topic information related to the video.
+   */
+  interface IVideoTopicDetails {
+    __typename: 'VideoTopicDetails';
+
+    /**
+     * Similar to topic_id, except that these topics are merely relevant to the
+     * video. These are topics that may be mentioned in, or appear in the video. You
+     * can retrieve information about each topic using Freebase Topic API.
+     */
+    relevantTopicIds: Array<string | null> | null;
+
+    /**
+     * A list of Wikipedia URLs that provide a high-level description of the video's content.
+     */
+    topicCategories: Array<string | null> | null;
+
+    /**
+     * A list of Freebase topic IDs that are centrally associated with the video.
+     * These are topics that are centrally featured in the video, and it can be said
+     * that the video is mainly about each of these. You can retrieve information
+     * about each topic using the Freebase Topic API.
+     */
+    topicIds: Array<string | null> | null;
+  }
+
+  interface IMutation {
+    __typename: 'Mutation';
+    channelCreate: string | null;
+    videoPush: ITrack | null;
+    authenticate: string | null;
+    markTrackAsPlayed: string | null;
+    channelJoin: IChannel | null;
+  }
+
+  interface IChannelCreateOnMutationArguments {
+    input: IChannelCreateInput;
+  }
+
+  interface IVideoPushOnMutationArguments {
+    input: IVideoPushInput;
+  }
+
+  interface IMarkTrackAsPlayedOnMutationArguments {
+    input: IMarkTrakAsPlayedInput;
+  }
+
+  interface IChannelJoinOnMutationArguments {
+    input: IChannelJoinInput;
+  }
+
+  interface IChannelCreateInput {
+    channelName?: string | null;
+  }
+
+  interface IVideoPushInput {
+    videoId: string;
+    channel: string;
+    title?: string | null;
+    time?: number | null;
+  }
+
+  interface IMarkTrakAsPlayedInput {
+    track: string;
+    nextTrack?: string | null;
+  }
+
+  interface IChannelJoinInput {
+    channelId: string;
   }
 
   /**
@@ -6330,428 +7669,6 @@ declare namespace GQL {
   }
 
   /**
-   * Ratings schemes. The country-specific ratings are mostly for movies and shows. NEXT_ID: 71
-   */
-  interface IContentRating {
-    __typename: 'ContentRating';
-
-    /**
-     * The video's Australian Classification Board (ACB) or Australian Communications
-     * and Media Authority (ACMA) rating. ACMA ratings are used to classify
-     * children's television programming.
-     */
-    acbRating: string | null;
-
-    /**
-     * The video's rating from Italy's Autorità per le Garanzie nelle Comunicazioni (AGCOM).
-     */
-    agcomRating: string | null;
-
-    /**
-     * The video's Anatel (Asociación Nacional de Televisión) rating for Chilean television.
-     */
-    anatelRating: string | null;
-
-    /**
-     * The video's British Board of Film Classification (BBFC) rating.
-     */
-    bbfcRating: string | null;
-
-    /**
-     * The video's rating from Thailand's Board of Film and Video Censors.
-     */
-    bfvcRating: string | null;
-
-    /**
-     * The video's rating from the Austrian Board of Media Classification (Bundesministerium für Unterricht, Kunst und Kultur).
-     */
-    bmukkRating: string | null;
-
-    /**
-     * Rating system for Canadian TV - Canadian TV Classification System The video's
-     * rating from the Canadian Radio-Television and Telecommunications Commission
-     * (CRTC) for Canadian English-language broadcasts. For more information, see the
-     * Canadian Broadcast Standards Council website.
-     */
-    catvRating: string | null;
-
-    /**
-     * The video's rating from the Canadian Radio-Television and Telecommunications
-     * Commission (CRTC) for Canadian French-language broadcasts. For more
-     * information, see the Canadian Broadcast Standards Council website.
-     */
-    catvfrRating: string | null;
-
-    /**
-     * The video's Central Board of Film Certification (CBFC - India) rating.
-     */
-    cbfcRating: string | null;
-
-    /**
-     * The video's Consejo de Calificación Cinematográfica (Chile) rating.
-     */
-    cccRating: string | null;
-
-    /**
-     * The video's rating from Portugal's Comissão de Classificação de Espect´culos.
-     */
-    cceRating: string | null;
-
-    /**
-     * The video's rating in Switzerland.
-     */
-    chfilmRating: string | null;
-
-    /**
-     * The video's Canadian Home Video Rating System (CHVRS) rating.
-     */
-    chvrsRating: string | null;
-
-    /**
-     * The video's rating from the Commission de Contrôle des Films (Belgium).
-     */
-    cicfRating: string | null;
-
-    /**
-     * The video's rating from Romania's CONSILIUL NATIONAL AL AUDIOVIZUALULUI (CNA).
-     */
-    cnaRating: string | null;
-
-    /**
-     * Rating system in France - Commission de classification cinematographique
-     */
-    cncRating: string | null;
-
-    /**
-     * The video's rating from France's Conseil supérieur de l?audiovisuel, which rates broadcast content.
-     */
-    csaRating: string | null;
-
-    /**
-     * The video's rating from Luxembourg's Commission de surveillance de la classification des films (CSCF).
-     */
-    cscfRating: string | null;
-
-    /**
-     * The video's rating in the Czech Republic.
-     */
-    czfilmRating: string | null;
-
-    /**
-     * The video's Departamento de Justiça, Classificação, Qualificação e Títulos (DJCQT - Brazil) rating.
-     */
-    djctqRating: string | null;
-
-    /**
-     * Reasons that explain why the video received its DJCQT (Brazil) rating.
-     */
-    djctqRatingReasons: DjctqRatingReasons | null;
-
-    /**
-     * Rating system in Turkey - Evaluation and Classification Board of the Ministry of Culture and Tourism
-     */
-    ecbmctRating: string | null;
-
-    /**
-     * The video's rating in Estonia.
-     */
-    eefilmRating: string | null;
-
-    /**
-     * The video's rating in Egypt.
-     */
-    egfilmRating: string | null;
-
-    /**
-     * The video's Eirin (映倫) rating. Eirin is the Japanese rating system.
-     */
-    eirinRating: string | null;
-
-    /**
-     * The video's rating from Malaysia's Film Censorship Board.
-     */
-    fcbmRating: string | null;
-
-    /**
-     * The video's rating from Hong Kong's Office for Film, Newspaper and Article Administration.
-     */
-    fcoRating: string | null;
-
-    /**
-     * This property has been deprecated. Use the contentDetails.contentRating.cncRating instead.
-     */
-    fmocRating: string | null;
-
-    /**
-     * The video's rating from South Africa's Film and Publication Board.
-     */
-    fpbRating: string | null;
-
-    /**
-     * Reasons that explain why the video received its FPB (South Africa) rating.
-     */
-    fpbRatingReasons: FpbRatingReasons | null;
-
-    /**
-     * The video's Freiwillige Selbstkontrolle der Filmwirtschaft (FSK - Germany) rating.
-     */
-    fskRating: string | null;
-
-    /**
-     * The video's rating in Greece.
-     */
-    grfilmRating: string | null;
-
-    /**
-     * The video's Instituto de la Cinematografía y de las Artes Audiovisuales (ICAA - Spain) rating.
-     */
-    icaaRating: string | null;
-
-    /**
-     * The video's Irish Film Classification Office (IFCO - Ireland) rating. See the IFCO website for more information.
-     */
-    ifcoRating: string | null;
-
-    /**
-     * The video's rating in Israel.
-     */
-    ilfilmRating: string | null;
-
-    /**
-     * The video's INCAA (Instituto Nacional de Cine y Artes Audiovisuales - Argentina) rating.
-     */
-    incaaRating: string | null;
-
-    /**
-     * The video's rating from the Kenya Film Classification Board.
-     */
-    kfcbRating: string | null;
-
-    /**
-     * voor de Classificatie van Audiovisuele Media (Netherlands).
-     */
-    kijkwijzerRating: string | null;
-
-    /**
-     * The video's Korea Media Rating Board (영상물등급위원회) rating. The KMRB rates videos in South Korea.
-     */
-    kmrbRating: string | null;
-
-    /**
-     * The video's rating from Indonesia's Lembaga Sensor Film.
-     */
-    lsfRating: string | null;
-
-    /**
-     * The video's rating from Malta's Film Age-Classification Board.
-     */
-    mccaaRating: string | null;
-
-    /**
-     * The video's rating from the Danish Film Institute's (Det Danske Filminstitut) Media Council for Children and Young People.
-     */
-    mccypRating: string | null;
-
-    /**
-     * The video's rating system for Vietnam - MCST
-     */
-    mcstRating: string | null;
-
-    /**
-     * The video's rating from Singapore's Media Development Authority (MDA) and, specifically, it's Board of Film Censors (BFC).
-     */
-    mdaRating: string | null;
-
-    /**
-     * The video's rating from Medietilsynet, the Norwegian Media Authority.
-     */
-    medietilsynetRating: string | null;
-
-    /**
-     * The video's rating from Finland's Kansallinen Audiovisuaalinen Instituutti (National Audiovisual Institute).
-     */
-    mekuRating: string | null;
-
-    /**
-     * The rating system for MENA countries, a clone of MPAA. It is needed to
-     */
-    menaMpaaRating: string | null;
-
-    /**
-     * The video's rating from the Ministero dei Beni e delle Attività Culturali e del Turismo (Italy).
-     */
-    mibacRating: string | null;
-
-    /**
-     * The video's Ministerio de Cultura (Colombia) rating.
-     */
-    mocRating: string | null;
-
-    /**
-     * The video's rating from Taiwan's Ministry of Culture (文化部).
-     */
-    moctwRating: string | null;
-
-    /**
-     * The video's Motion Picture Association of America (MPAA) rating.
-     */
-    mpaaRating: string | null;
-
-    /**
-     * The rating system for trailer, DVD, and Ad in the US. See http://movielabs.com/md/ratings/v2.3/html/US_MPAAT_Ratings.html.
-     */
-    mpaatRating: string | null;
-
-    /**
-     * The video's rating from the Movie and Television Review and Classification Board (Philippines).
-     */
-    mtrcbRating: string | null;
-
-    /**
-     * The video's rating from the Maldives National Bureau of Classification.
-     */
-    nbcRating: string | null;
-
-    /**
-     * The video's rating in Poland.
-     */
-    nbcplRating: string | null;
-
-    /**
-     * The video's rating from the Bulgarian National Film Center.
-     */
-    nfrcRating: string | null;
-
-    /**
-     * The video's rating from Nigeria's National Film and Video Censors Board.
-     */
-    nfvcbRating: string | null;
-
-    /**
-     * The video's rating from the Nacionãlais Kino centrs (National Film Centre of Latvia).
-     */
-    nkclvRating: string | null;
-
-    /**
-     * The video's Office of Film and Literature Classification (OFLC - New Zealand) rating.
-     */
-    oflcRating: string | null;
-
-    /**
-     * The video's rating in Peru.
-     */
-    pefilmRating: string | null;
-
-    /**
-     * The video's rating from the Hungarian Nemzeti Filmiroda, the Rating Committee of the National Office of Film.
-     */
-    rcnofRating: string | null;
-
-    /**
-     * The video's rating in Venezuela.
-     */
-    resorteviolenciaRating: string | null;
-
-    /**
-     * The video's General Directorate of Radio, Television and Cinematography (Mexico) rating.
-     */
-    rtcRating: string | null;
-
-    /**
-     * The video's rating from Ireland's Raidió Teilifís Éireann.
-     */
-    rteRating: string | null;
-
-    /**
-     * The video's National Film Registry of the Russian Federation (MKRF - Russia) rating.
-     */
-    russiaRating: string | null;
-
-    /**
-     * The video's rating in Slovakia.
-     */
-    skfilmRating: string | null;
-
-    /**
-     * The video's rating in Iceland.
-     */
-    smaisRating: string | null;
-
-    /**
-     * The video's rating from Statens medieråd (Sweden's National Media Council).
-     */
-    smsaRating: string | null;
-
-    /**
-     * The video's TV Parental Guidelines (TVPG) rating.
-     */
-    tvpgRating: string | null;
-
-    /**
-     * A rating that YouTube uses to identify age-restricted content.
-     */
-    ytRating: string | null;
-  }
-
-  const enum DjctqRatingReasons {
-    djctqCriminalActs = 'djctqCriminalActs',
-    djctqDrugs = 'djctqDrugs',
-    djctqExplicitSex = 'djctqExplicitSex',
-    djctqExtremeViolence = 'djctqExtremeViolence',
-    djctqIllegalDrugs = 'djctqIllegalDrugs',
-    djctqImpactingContent = 'djctqImpactingContent',
-    djctqInappropriateLanguage = 'djctqInappropriateLanguage',
-    djctqLegalDrugs = 'djctqLegalDrugs',
-    djctqNudity = 'djctqNudity',
-    djctqSex = 'djctqSex',
-    djctqSexualContent = 'djctqSexualContent',
-    djctqViolence = 'djctqViolence'
-  }
-
-  const enum FpbRatingReasons {
-    fpbBlasphemy = 'fpbBlasphemy',
-    fpbCriminalTechniques = 'fpbCriminalTechniques',
-    fpbDrugs = 'fpbDrugs',
-    fpbHorror = 'fpbHorror',
-    fpbImitativeActsTechniques = 'fpbImitativeActsTechniques',
-    fpbLanguage = 'fpbLanguage',
-    fpbNudity = 'fpbNudity',
-    fpbPrejudice = 'fpbPrejudice',
-    fpbSex = 'fpbSex',
-    fpbSexualViolence = 'fpbSexualViolence',
-    fpbViolence = 'fpbViolence'
-  }
-
-  const enum EditorSuggestions {
-    audioQuietAudioSwap = 'audioQuietAudioSwap',
-    videoAutoLevels = 'videoAutoLevels',
-    videoCrop = 'videoCrop',
-    videoStabilize = 'videoStabilize'
-  }
-
-  /**
-   * Geographical coordinates of a point, in WGS84.
-   */
-  interface IGeoPoint {
-    __typename: 'GeoPoint';
-
-    /**
-     * Altitude above the reference ellipsoid, in meters.
-     */
-    altitude: number | null;
-
-    /**
-     * Latitude in degrees.
-     */
-    latitude: number | null;
-
-    /**
-     * Longitude in degrees.
-     */
-    longitude: number | null;
-  }
-
-  /**
    * Describes the spatial position of a visual widget inside a video. It is a union
    * of various position types, out of which only will be set one.
    */
@@ -6885,760 +7802,6 @@ declare namespace GQL {
      * pointing to the website. This field will be present only if type has the value website.
      */
     websiteUrl: string | null;
-  }
-
-  const enum ProcessingErrors {
-    archiveFile = 'archiveFile',
-    audioFile = 'audioFile',
-    docFile = 'docFile',
-    imageFile = 'imageFile',
-    notAVideoFile = 'notAVideoFile',
-    projectFile = 'projectFile',
-    unsupportedSpatialAudioLayout = 'unsupportedSpatialAudioLayout'
-  }
-
-  const enum ProcessingHints {
-    hdrVideo = 'hdrVideo',
-    nonStreamableMov = 'nonStreamableMov',
-    sendBestQualityVideo = 'sendBestQualityVideo',
-    spatialAudio = 'spatialAudio',
-    sphericalVideo = 'sphericalVideo',
-    vrVideo = 'vrVideo'
-  }
-
-  const enum ProcessingWarnings {
-    hasEditlist = 'hasEditlist',
-    inconsistentResolution = 'inconsistentResolution',
-    problematicAudioCodec = 'problematicAudioCodec',
-    problematicHdrLookupTable = 'problematicHdrLookupTable',
-    problematicVideoCodec = 'problematicVideoCodec',
-    unknownAudioCodec = 'unknownAudioCodec',
-    unknownContainer = 'unknownContainer',
-    unknownVideoCodec = 'unknownVideoCodec',
-    unsupportedHdrColorMetadata = 'unsupportedHdrColorMetadata',
-    unsupportedHdrPixelFormat = 'unsupportedHdrPixelFormat',
-    unsupportedSphericalProjectionType = 'unsupportedSphericalProjectionType',
-    unsupportedVrStereoMode = 'unsupportedVrStereoMode'
-  }
-
-  interface IVideoAgeGating {
-    __typename: 'VideoAgeGating';
-
-    /**
-     * Indicates whether or not the video has alcoholic beverage content. Only users
-     * of legal purchasing age in a particular country, as identified by ICAP, can
-     * view the content.
-     */
-    alcoholContent: boolean | null;
-
-    /**
-     * Age-restricted trailers. For redband trailers and adult-rated video-games.
-     * Only users aged 18+ can view the content. The the field is true the content is
-     * restricted to viewers aged 18+. Otherwise The field won't be present.
-     */
-    restricted: boolean | null;
-
-    /**
-     * Video game rating, if any.
-     */
-    videoGameRating: string | null;
-  }
-
-  /**
-   * Details about the content of a YouTube Video.
-   */
-  interface IVideoContentDetails {
-    __typename: 'VideoContentDetails';
-
-    /**
-     * The value of captions indicates whether the video has captions or not.
-     */
-    caption: string | null;
-
-    /**
-     * Specifies the ratings that the video received under various rating schemes.
-     */
-    contentRating: IContentRating | null;
-
-    /**
-     * The countryRestriction object contains information about the countries where a video is (or is not) viewable.
-     */
-    countryRestriction: IAccessPolicy | null;
-
-    /**
-     * The value of definition indicates whether the video is available in high definition or only in standard definition.
-     */
-    definition: string | null;
-
-    /**
-     * The value of dimension indicates whether the video is available in 3D or in 2D.
-     */
-    dimension: string | null;
-
-    /**
-     * The length of the video. The tag value is an ISO 8601 duration in the format
-     * PT#M#S, in which the letters PT indicate that the value specifies a period of
-     * time, and the letters M and S refer to length in minutes and seconds,
-     * respectively. The # characters preceding the M and S letters are both integers
-     * that specify the number of minutes (or seconds) of the video. For example, a
-     * value of PT15M51S indicates that the video is 15 minutes and 51 seconds long.
-     */
-    duration: string | null;
-
-    /**
-     * Indicates whether the video uploader has provided a custom thumbnail image for
-     * the video. This property is only visible to the video uploader.
-     */
-    hasCustomThumbnail: boolean | null;
-
-    /**
-     * The value of is_license_content indicates whether the video is licensed content.
-     */
-    licensedContent: boolean | null;
-
-    /**
-     * Specifies the projection format of the video.
-     */
-    projection: string | null;
-
-    /**
-     * The regionRestriction object contains information about the countries where a
-     * video is (or is not) viewable. The object will contain either the
-     * contentDetails.regionRestriction.allowed property or the
-     * contentDetails.regionRestriction.blocked property.
-     */
-    regionRestriction: IVideoContentDetailsRegionRestriction | null;
-  }
-
-  /**
-   * DEPRECATED Region restriction of the video.
-   */
-  interface IVideoContentDetailsRegionRestriction {
-    __typename: 'VideoContentDetailsRegionRestriction';
-
-    /**
-     * A list of region codes that identify countries where the video is viewable. If
-     * this property is present and a country is not listed in its value, then the
-     * video is blocked from appearing in that country. If this property is present
-     * and contains an empty list, the video is blocked in all countries.
-     */
-    allowed: Array<string | null> | null;
-
-    /**
-     * A list of region codes that identify countries where the video is blocked. If
-     * this property is present and a country is not listed in its value, then the
-     * video is viewable in that country. If this property is present and contains an
-     * empty list, the video is viewable in all countries.
-     */
-    blocked: Array<string | null> | null;
-  }
-
-  /**
-   * Describes original video file properties, including technical details about
-   * audio and video streams, but also metadata information like content length,
-   * digitization time, or geotagging information.
-   */
-  interface IVideoFileDetails {
-    __typename: 'VideoFileDetails';
-
-    /**
-     * A list of audio streams contained in the uploaded video file. Each item in the
-     * list contains detailed metadata about an audio stream.
-     */
-    audioStreams: Array<IVideoFileDetailsAudioStream | null> | null;
-
-    /**
-     * The uploaded video file's combined (video and audio) bitrate in bits per second.
-     */
-    bitrateBps: string | null;
-
-    /**
-     * The uploaded video file's container format.
-     */
-    container: string | null;
-
-    /**
-     * The date and time when the uploaded video file was created. The value is
-     * specified in ISO 8601 format. Currently, the following ISO 8601 formats are supported:
-     * - Date only: YYYY-MM-DD
-     * - Naive time: YYYY-MM-DDTHH:MM:SS
-     * - Time with timezone: YYYY-MM-DDTHH:MM:SS+HH:MM
-     */
-    creationTime: string | null;
-
-    /**
-     * The length of the uploaded video in milliseconds.
-     */
-    durationMs: string | null;
-
-    /**
-     * The uploaded file's name. This field is present whether a video file or another type of file was uploaded.
-     */
-    fileName: string | null;
-
-    /**
-     * The uploaded file's size in bytes. This field is present whether a video file or another type of file was uploaded.
-     */
-    fileSize: string | null;
-
-    /**
-     * The uploaded file's type as detected by YouTube's video processing engine.
-     * Currently, YouTube only processes video files, but this field is present
-     * whether a video file or another type of file was uploaded.
-     */
-    fileType: string | null;
-
-    /**
-     * A list of video streams contained in the uploaded video file. Each item in the
-     * list contains detailed metadata about a video stream.
-     */
-    videoStreams: Array<IVideoFileDetailsVideoStream | null> | null;
-  }
-
-  /**
-   * Information about an audio stream.
-   */
-  interface IVideoFileDetailsAudioStream {
-    __typename: 'VideoFileDetailsAudioStream';
-
-    /**
-     * The audio stream's bitrate, in bits per second.
-     */
-    bitrateBps: string | null;
-
-    /**
-     * The number of audio channels that the stream contains.
-     */
-    channelCount: number | null;
-
-    /**
-     * The audio codec that the stream uses.
-     */
-    codec: string | null;
-
-    /**
-     * A value that uniquely identifies a video vendor. Typically, the value is a four-letter vendor code.
-     */
-    vendor: string | null;
-  }
-
-  /**
-   * Information about a video stream.
-   */
-  interface IVideoFileDetailsVideoStream {
-    __typename: 'VideoFileDetailsVideoStream';
-
-    /**
-     * The video content's display aspect ratio, which specifies the aspect ratio in which the video should be displayed.
-     */
-    aspectRatio: number | null;
-
-    /**
-     * The video stream's bitrate, in bits per second.
-     */
-    bitrateBps: string | null;
-
-    /**
-     * The video codec that the stream uses.
-     */
-    codec: string | null;
-
-    /**
-     * The video stream's frame rate, in frames per second.
-     */
-    frameRateFps: number | null;
-
-    /**
-     * The encoded video content's height in pixels.
-     */
-    heightPixels: number | null;
-
-    /**
-     * The amount that YouTube needs to rotate the original source content to properly display the video.
-     */
-    rotation: string | null;
-
-    /**
-     * A value that uniquely identifies a video vendor. Typically, the value is a four-letter vendor code.
-     */
-    vendor: string | null;
-
-    /**
-     * The encoded video content's width in pixels. You can calculate the video's
-     * encoding aspect ratio as width_pixels / height_pixels.
-     */
-    widthPixels: number | null;
-  }
-
-  /**
-   * Details about the live streaming metadata.
-   */
-  interface IVideoLiveStreamingDetails {
-    __typename: 'VideoLiveStreamingDetails';
-
-    /**
-     * The ID of the currently active live chat attached to this video. This field is
-     * filled only if the video is a currently live broadcast that has live chat.
-     * Once the broadcast transitions to complete this field will be removed and the
-     * live chat closed down. For persistent broadcasts that live chat id will no
-     * longer be tied to this video but rather to the new video being displayed at
-     * the persistent page.
-     */
-    activeLiveChatId: string | null;
-
-    /**
-     * The time that the broadcast actually ended. The value is specified in ISO 8601
-     * (YYYY-MM-DDThh:mm:ss.sZ) format. This value will not be available until the
-     * broadcast is over.
-     */
-    actualEndTime: string | null;
-
-    /**
-     * The time that the broadcast actually started. The value is specified in ISO
-     * 8601 (YYYY-MM-DDThh:mm:ss.sZ) format. This value will not be available until
-     * the broadcast begins.
-     */
-    actualStartTime: string | null;
-
-    /**
-     * The number of viewers currently watching the broadcast. The property and its
-     * value will be present if the broadcast has current viewers and the broadcast
-     * owner has not hidden the viewcount for the video. Note that YouTube stops
-     * tracking the number of concurrent viewers for a broadcast when the broadcast
-     * ends. So, this property would not identify the number of viewers watching an
-     * archived video of a live broadcast that already ended.
-     */
-    concurrentViewers: string | null;
-
-    /**
-     * The time that the broadcast is scheduled to end. The value is specified in ISO
-     * 8601 (YYYY-MM-DDThh:mm:ss.sZ) format. If the value is empty or the property is
-     * not present, then the broadcast is scheduled to continue indefinitely.
-     */
-    scheduledEndTime: string | null;
-
-    /**
-     * The time that the broadcast is scheduled to begin. The value is specified in ISO 8601 (YYYY-MM-DDThh:mm:ss.sZ) format.
-     */
-    scheduledStartTime: string | null;
-  }
-
-  /**
-   * Localized versions of certain video properties (e.g. title).
-   */
-  interface IVideoLocalization {
-    __typename: 'VideoLocalization';
-
-    /**
-     * Localized version of the video's description.
-     */
-    description: string | null;
-
-    /**
-     * Localized version of the video's title.
-     */
-    title: string | null;
-  }
-
-  /**
-   * Details about monetization of a YouTube Video.
-   */
-  interface IVideoMonetizationDetails {
-    __typename: 'VideoMonetizationDetails';
-
-    /**
-     * The value of access indicates whether the video can be monetized or not.
-     */
-    access: IAccessPolicy | null;
-  }
-
-  /**
-   * Player to be used for a video playback.
-   */
-  interface IVideoPlayer {
-    __typename: 'VideoPlayer';
-    embedHeight: string | null;
-
-    /**
-     * An <iframe> tag that embeds a player that will play the video.
-     */
-    embedHtml: string | null;
-
-    /**
-     * The embed width
-     */
-    embedWidth: string | null;
-  }
-
-  /**
-   * Describes processing status and progress and availability of some other Video resource parts.
-   */
-  interface IVideoProcessingDetails {
-    __typename: 'VideoProcessingDetails';
-
-    /**
-     * This value indicates whether video editing suggestions, which might improve
-     * video quality or the playback experience, are available for the video. You can
-     * retrieve these suggestions by requesting the suggestions part in your
-     * videos.list() request.
-     */
-    editorSuggestionsAvailability: string | null;
-
-    /**
-     * This value indicates whether file details are available for the uploaded
-     * video. You can retrieve a video's file details by requesting the fileDetails
-     * part in your videos.list() request.
-     */
-    fileDetailsAvailability: string | null;
-
-    /**
-     * The reason that YouTube failed to process the video. This property will only
-     * have a value if the processingStatus property's value is failed.
-     */
-    processingFailureReason: string | null;
-
-    /**
-     * This value indicates whether the video processing engine has generated
-     * suggestions that might improve YouTube's ability to process the the video,
-     * warnings that explain video processing problems, or errors that cause video
-     * processing problems. You can retrieve these suggestions by requesting the
-     * suggestions part in your videos.list() request.
-     */
-    processingIssuesAvailability: string | null;
-
-    /**
-     * The processingProgress object contains information about the progress YouTube
-     * has made in processing the video. The values are really only relevant if the
-     * video's processing status is processing.
-     */
-    processingProgress: IVideoProcessingDetailsProcessingProgress | null;
-
-    /**
-     * The video's processing status. This value indicates whether YouTube was able
-     * to process the video or if the video is still being processed.
-     */
-    processingStatus: string | null;
-
-    /**
-     * This value indicates whether keyword (tag) suggestions are available for the
-     * video. Tags can be added to a video's metadata to make it easier for other
-     * users to find the video. You can retrieve these suggestions by requesting the
-     * suggestions part in your videos.list() request.
-     */
-    tagSuggestionsAvailability: string | null;
-
-    /**
-     * This value indicates whether thumbnail images have been generated for the video.
-     */
-    thumbnailsAvailability: string | null;
-  }
-
-  /**
-   * Video processing progress and completion time estimate.
-   */
-  interface IVideoProcessingDetailsProcessingProgress {
-    __typename: 'VideoProcessingDetailsProcessingProgress';
-
-    /**
-     * The number of parts of the video that YouTube has already processed. You can
-     * estimate the percentage of the video that YouTube has already processed by calculating:
-     * 100 * parts_processed / parts_total
-     *
-     * Note that since the estimated number of parts could increase without a
-     * corresponding increase in the number of parts that have already been
-     * processed, it is possible that the calculated progress could periodically
-     * decrease while YouTube processes a video.
-     */
-    partsProcessed: string | null;
-
-    /**
-     * An estimate of the total number of parts that need to be processed for the
-     * video. The number may be updated with more precise estimates while YouTube
-     * processes the video.
-     */
-    partsTotal: string | null;
-
-    /**
-     * An estimate of the amount of time, in millseconds, that YouTube needs to finish processing the video.
-     */
-    timeLeftMs: string | null;
-  }
-
-  /**
-   * Project specific details about the content of a YouTube Video.
-   */
-  interface IVideoProjectDetails {
-    __typename: 'VideoProjectDetails';
-
-    /**
-     * A list of project tags associated with the video during the upload.
-     */
-    tags: Array<string | null> | null;
-  }
-
-  /**
-   * Recording information associated with the video.
-   */
-  interface IVideoRecordingDetails {
-    __typename: 'VideoRecordingDetails';
-
-    /**
-     * The geolocation information associated with the video.
-     */
-    location: IGeoPoint | null;
-
-    /**
-     * The text description of the location where the video was recorded.
-     */
-    locationDescription: string | null;
-
-    /**
-     * The date and time when the video was recorded. The value is specified in ISO 8601 (YYYY-MM-DDThh:mm:ss.sssZ) format.
-     */
-    recordingDate: string | null;
-  }
-
-  /**
-   * Basic details about a video, including title, description, uploader, thumbnails and category.
-   */
-  interface IVideoSnippet {
-    __typename: 'VideoSnippet';
-
-    /**
-     * The YouTube video category associated with the video.
-     */
-    categoryId: string | null;
-
-    /**
-     * The ID that YouTube uses to uniquely identify the channel that the video was uploaded to.
-     */
-    channelId: string | null;
-
-    /**
-     * Channel title for the channel that the video belongs to.
-     */
-    channelTitle: string | null;
-
-    /**
-     * The default_audio_language property specifies the language spoken in the video's default audio track.
-     */
-    defaultAudioLanguage: string | null;
-
-    /**
-     * The language of the videos's default snippet.
-     */
-    defaultLanguage: string | null;
-
-    /**
-     * The video's description.
-     */
-    description: string | null;
-
-    /**
-     * Indicates if the video is an upcoming/active live broadcast. Or it's "none" if
-     * the video is not an upcoming/active live broadcast.
-     */
-    liveBroadcastContent: string | null;
-
-    /**
-     * Localized snippet selected with the hl parameter. If no such localization
-     * exists, this field is populated with the default snippet. (Read-only)
-     */
-    localized: IVideoLocalization | null;
-
-    /**
-     * The date and time that the video was uploaded. The value is specified in ISO 8601 (YYYY-MM-DDThh:mm:ss.sZ) format.
-     */
-    publishedAt: string | null;
-
-    /**
-     * A list of keyword tags associated with the video. Tags may contain spaces.
-     */
-    tags: Array<string | null> | null;
-
-    /**
-     * A map of thumbnail images associated with the video. For each object in the
-     * map, the key is the name of the thumbnail image, and the value is an object
-     * that contains other information about the thumbnail.
-     */
-    thumbnails: IThumbnailDetails | null;
-
-    /**
-     * The video's title.
-     */
-    title: string | null;
-  }
-
-  /**
-   * Statistics about the video, such as the number of times the video was viewed or liked.
-   */
-  interface IVideoStatistics {
-    __typename: 'VideoStatistics';
-
-    /**
-     * The number of comments for the video.
-     */
-    commentCount: string | null;
-
-    /**
-     * The number of users who have indicated that they disliked the video by giving it a negative rating.
-     */
-    dislikeCount: string | null;
-
-    /**
-     * The number of users who currently have the video marked as a favorite video.
-     */
-    favoriteCount: string | null;
-
-    /**
-     * The number of users who have indicated that they liked the video by giving it a positive rating.
-     */
-    likeCount: string | null;
-
-    /**
-     * The number of times the video has been viewed.
-     */
-    viewCount: string | null;
-  }
-
-  /**
-   * Basic details about a video category, such as its localized title.
-   */
-  interface IVideoStatus {
-    __typename: 'VideoStatus';
-
-    /**
-     * This value indicates if the video can be embedded on another website.
-     */
-    embeddable: boolean | null;
-
-    /**
-     * This value explains why a video failed to upload. This property is only
-     * present if the uploadStatus property indicates that the upload failed.
-     */
-    failureReason: string | null;
-
-    /**
-     * The video's license.
-     */
-    license: string | null;
-
-    /**
-     * The video's privacy status.
-     */
-    privacyStatus: string | null;
-
-    /**
-     * This value indicates if the extended video statistics on the watch page can be
-     * viewed by everyone. Note that the view count, likes, etc will still be visible
-     * if this is disabled.
-     */
-    publicStatsViewable: boolean | null;
-
-    /**
-     * The date and time when the video is scheduled to publish. It can be set only
-     * if the privacy status of the video is private. The value is specified in ISO
-     * 8601 (YYYY-MM-DDThh:mm:ss.sZ) format.
-     */
-    publishAt: string | null;
-
-    /**
-     * This value explains why YouTube rejected an uploaded video. This property is
-     * only present if the uploadStatus property indicates that the upload was rejected.
-     */
-    rejectionReason: string | null;
-
-    /**
-     * The status of the uploaded video.
-     */
-    uploadStatus: string | null;
-  }
-
-  /**
-   * Specifies suggestions on how to improve video content, including encoding hints, tag suggestions, and editor suggestions.
-   */
-  interface IVideoSuggestions {
-    __typename: 'VideoSuggestions';
-
-    /**
-     * A list of video editing operations that might improve the video quality or playback experience of the uploaded video.
-     */
-    editorSuggestions: EditorSuggestions | null;
-
-    /**
-     * A list of errors that will prevent YouTube from successfully processing the
-     * uploaded video video. These errors indicate that, regardless of the video's
-     * current processing status, eventually, that status will almost certainly be failed.
-     */
-    processingErrors: ProcessingErrors | null;
-
-    /**
-     * A list of suggestions that may improve YouTube's ability to process the video.
-     */
-    processingHints: ProcessingHints | null;
-
-    /**
-     * A list of reasons why YouTube may have difficulty transcoding the uploaded
-     * video or that might result in an erroneous transcoding. These warnings are
-     * generated before YouTube actually processes the uploaded video file. In
-     * addition, they identify issues that are unlikely to cause the video processing
-     * to fail but that might cause problems such as sync issues, video artifacts, or
-     * a missing audio track.
-     */
-    processingWarnings: ProcessingWarnings | null;
-
-    /**
-     * A list of keyword tags that could be added to the video's metadata to increase
-     * the likelihood that users will locate your video when searching or browsing on YouTube.
-     */
-    tagSuggestions: Array<IVideoSuggestionsTagSuggestion | null> | null;
-  }
-
-  /**
-   * A single tag suggestion with it's relevance information.
-   */
-  interface IVideoSuggestionsTagSuggestion {
-    __typename: 'VideoSuggestionsTagSuggestion';
-
-    /**
-     * A set of video categories for which the tag is relevant. You can use this
-     * information to display appropriate tag suggestions based on the video category
-     * that the video uploader associates with the video. By default, tag suggestions
-     * are relevant for all categories if there are no restricts defined for the keyword.
-     */
-    categoryRestricts: Array<string | null> | null;
-
-    /**
-     * The keyword tag suggested for the video.
-     */
-    tag: string | null;
-  }
-
-  /**
-   * Freebase topic information related to the video.
-   */
-  interface IVideoTopicDetails {
-    __typename: 'VideoTopicDetails';
-
-    /**
-     * Similar to topic_id, except that these topics are merely relevant to the
-     * video. These are topics that may be mentioned in, or appear in the video. You
-     * can retrieve information about each topic using Freebase Topic API.
-     */
-    relevantTopicIds: Array<string | null> | null;
-
-    /**
-     * A list of Wikipedia URLs that provide a high-level description of the video's content.
-     */
-    topicCategories: Array<string | null> | null;
-
-    /**
-     * A list of Freebase topic IDs that are centrally associated with the video.
-     * These are topics that are centrally featured in the video, and it can be said
-     * that the video is mainly about each of these. You can retrieve information
-     * about each topic using the Freebase Topic API.
-     */
-    topicIds: Array<string | null> | null;
   }
 }
 

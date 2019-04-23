@@ -6,6 +6,7 @@ import { PubSub } from 'graphql-subscriptions'
 import { TContext } from '../global'
 import { pg, upsert } from './knex'
 import { fromBase26, toBase26 } from './Base26'
+import IMarkTrackAsPlayedOnMutationArguments = GQL.IMarkTrackAsPlayedOnMutationArguments
 
 const PUBSUB_CHANNEL = 'VIDEO_ADDED'
 
@@ -92,12 +93,17 @@ const handSchema = gql`
 
   }
 
+  input MarkTrakAsPlayedInput {
+    track:ID!
+    nextTrack:ID
+  }
+
   type Mutation {
     channelCreate(input: ChannelCreateInput!): ID
     videoPush(input: VideoPushInput!): Track
     authenticate:ID
-    markTrackAsNowPlaying(track:ID!): ID
-    markTrackAsPlayed(track:ID!): ID
+
+    markTrackAsPlayed(input:MarkTrakAsPlayedInput!): ID
     channelJoin(input:ChannelJoinInput!):Channel
   }
 
@@ -168,13 +174,6 @@ const resolvers = {
     owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
 
     tracks: async (parent, { first, after, played }, ctx) => {
-      console.log('PARENT', parent)
-
-
-      // GET THE NOW PLAYING TRACK FROM CHANNEL
-
-      //
-
 
       const whereClause: { channel: string, played?: boolean } = { channel: parent.dbId }
 
@@ -218,58 +217,37 @@ const resolvers = {
     }
   },
   Mutation: {
-    markTrackAsNowPlaying: async (parent, { track }, ctx: TContext) => {
+    markTrackAsPlayed: async (parent, args: IMarkTrackAsPlayedOnMutationArguments, ctx: TContext) => {
 
+      const { nextTrack, track } = args.input
       // get track // get channel from track // see if channel is owned by tgit a
       // query makes sure that only the owner of the channel can mark the track as played
 
+      const channelOwnerQuery = pg('users').select('id').where({ google_id: ctx.user.sub })
+
       const channelsOwner = pg('channels').select('id').where({
         id: pg.raw('tracks.channel'),
-        owner: pg('users').select('id').where({ google_id: ctx.user.sub })
+        owner: channelOwnerQuery
       })
+
 
       const updateQuery = pg('tracks').update({ played: true }).where({
         id: track,
         channel: channelsOwner
       }).returning('*')
+      
+      const [updateResp] = await updateQuery
 
-
-      const updateResp = await updateQuery
-
-      if (updateResp.length === 0) {
+      if (updateResp) {
+        const updateChannelResp = await pg('channels').update({ now_playing: nextTrack || null }).where({ id: updateResp.channel }).returning('*')
+      } else {
+        // set now playing on channel
         throw 'Unable to mark track as played, please make sure your viewing the right party under the right Google Account'
+
       }
 
-      console.log('UPDATED TRACK ', updateResp[0])
-      pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp[0] })
-
-      return track
-    },
-    markTrackAsPlayed: async (parent, { track }, ctx: TContext) => {
-
-      // get track // get channel from track // see if channel is owned by tgit a
-      // query makes sure that only the owner of the channel can mark the track as played
-
-      const channelsOwner = pg('channels').select('id').where({
-        id: pg.raw('tracks.channel'),
-        owner: pg('users').select('id').where({ google_id: ctx.user.sub })
-      })
-
-      const updateQuery = pg('tracks').update({ played: true }).where({
-        id: track,
-        channel: channelsOwner
-      }).returning('*')
-
-
-      const updateResp = await updateQuery
-
-      if (updateResp.length === 0) {
-        throw 'Unable to mark track as played, please make sure your viewing the right party under the right Google Account'
-      }
-
-
-      console.log('UPDATED TRACK ', updateResp[0])
-      pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp[0] })
+      //console.log('UPDATED TRACK ', updateResp[0])
+      //  pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp[0] })
 
       return track
     },
