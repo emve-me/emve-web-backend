@@ -17,6 +17,8 @@ create table channels (
     owner bigint not null references users(id)
 );
 
+ALTER SEQUENCE channels_id_seq RESTART WITH 456976;
+
 create table tracks (
     id bigserial primary key,
     video_id text not null,
@@ -27,3 +29,5 @@ create table tracks (
     added_on date not null default current_timestamp,
     played boolean not null default false
 );
+
+alter table channels add column now_playing bigint references tracks(id);

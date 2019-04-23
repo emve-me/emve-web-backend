@@ -7,6 +7,8 @@ import { TContext } from '../global'
 import { pg, upsert } from './knex'
 import { fromBase26, toBase26 } from './Base26'
 
+const PUBSUB_CHANNEL = 'VIDEO_ADDED'
+
 export const pubsub = new PubSub()
 
 const handSchema = gql`
@@ -60,6 +62,10 @@ const handSchema = gql`
     hasNextPage: Boolean
   }
 
+  enum TrackState {
+    playing, played, upcoming
+  }
+
   type Track {
     id: ID
     videoId: ID
@@ -67,13 +73,14 @@ const handSchema = gql`
     owner: User
     channel: Channel
     addedOn: String
-    played: Boolean
+    state: TrackState
   }
 
 
   type Channel {
     id:ID
     createdOn:String
+    track: Track
     name:String
     owner:User
     tracks (first: Int, after: ID, played: Boolean):Tracks
@@ -88,16 +95,17 @@ const handSchema = gql`
     channelCreate(input: ChannelCreateInput!): ID
     videoPush(input: VideoPushInput!): Track
     authenticate:ID
+    markTrackAsNowPlaying(track:ID!): ID
     markTrackAsPlayed(track:ID!): ID
     channelJoin(input:ChannelJoinInput!):Channel
   }
 
-  input VideoPushedInput {
+  input TrackUpdatedInput {
     channel:ID
   }
 
   type Subscription {
-    videoPushed(input:VideoPushedInput!): Track
+    trackUpdated(input:TrackUpdatedInput!): Track
   }
 `
 
@@ -114,7 +122,16 @@ const resolvers = {
   },
   Track: {
     owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
-    videoId: ({ video_id }) => video_id
+    videoId: ({ video_id }) => video_id,
+    state: ({ played }) => {
+      if (played === true) {
+        return 'played'
+      } else if (played === false) {
+        return 'upcoming'
+      } else if (played === 'now') {
+        return 'playing'
+      }
+    }
   },
   Query: {
     channel: async (_, { id }, ctx) => {
@@ -143,6 +160,34 @@ const resolvers = {
     }
   },
   Mutation: {
+    markTrackAsNowPlaying: async (parent, { track }, ctx: TContext) => {
+
+      // get track // get channel from track // see if channel is owned by tgit a
+      // query makes sure that only the owner of the channel can mark the track as played
+
+      const channelsOwner = pg('channels').select('id').where({
+        id: pg.raw('tracks.channel'),
+        owner: pg('users').select('id').where({ google_id: ctx.user.sub })
+      })
+
+      const updateQuery = pg('tracks').update({ played: true }).where({
+        id: track,
+        channel: channelsOwner
+      }).returning('*')
+
+
+      const updateResp = await updateQuery
+
+      if (updateResp.length === 0) {
+        throw 'Unable to mark track as played, please make sure your viewing the right party under the right Google Account'
+      }
+
+
+      console.log('UPDATED TRACK ', updateResp[0])
+      pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp[0] })
+
+      return track
+    },
     markTrackAsPlayed: async (parent, { track }, ctx: TContext) => {
 
       // get track // get channel from track // see if channel is owned by tgit a
@@ -164,6 +209,10 @@ const resolvers = {
       if (updateResp.length === 0) {
         throw 'Unable to mark track as played, please make sure your viewing the right party under the right Google Account'
       }
+
+
+      console.log('UPDATED TRACK ', updateResp[0])
+      pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp[0] })
 
       return track
     },
@@ -206,10 +255,8 @@ const resolvers = {
         owner: pg('users').select('id').where({ google_id: ctx.user.sub })
       }).returning('*')
 
-      console.log({ videoAddedResponse })
-
       videoAddedResponse.channel = channel
-      pubsub.publish('VIDEO_ADDED', { videoPushed: videoAddedResponse })
+      pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: videoAddedResponse })
 
       return videoAddedResponse
     }
@@ -239,13 +286,13 @@ const resolvers = {
   },
 
   Subscription: {
-    videoPushed: {
+    trackUpdated: {
       subscribe: withFilter(
-        () => pubsub.asyncIterator('VIDEO_ADDED'),
+        () => pubsub.asyncIterator(PUBSUB_CHANNEL),
         (payload, variables) => {
 
           console.log('subscribe', { payload, variables })
-          return payload.videoPushed.channel === variables.input.channel
+          return payload.trackUpdated.channel === variables.input.channel
         }
       )
     }
