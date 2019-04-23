@@ -1,7 +1,10 @@
 import DataLoader from 'dataloader'
 
 export type TContext = {
-  loaders: { users: DataLoader<number, any> }
+  loaders: {
+    users: DataLoader<number, any>
+    tracks: DataLoader<number, any>
+  }
   user: {
     iss
     azp

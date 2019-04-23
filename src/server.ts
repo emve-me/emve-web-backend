@@ -5,18 +5,16 @@ import jwt from 'jsonwebtoken'
 import DataLoader from 'dataloader'
 
 
-const getUsers = async (keys) => {
-  console.log('GET KEYS', keys)
-  const r = await pg('users').select('*').whereIn('id', keys)
-  return r
-}
+const getUsers = async (keys) => await pg('users').select('*').whereIn('id', keys)
+
+const getTracks = async (keys) => await pg('tracks').select('*').whereIn('id', keys)
 
 function createLoaders({ user }: { user? }) {
   return {
-    users: new DataLoader<number, any>(keys => getUsers(keys))
+    users: new DataLoader<number, any>(keys => getUsers(keys)),
+    tracks: new DataLoader<number, any>(keys => getTracks(keys))
   }
 }
-
 
 const server = new ApolloServer({
   schema, cors: true,

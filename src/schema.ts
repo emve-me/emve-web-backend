@@ -84,6 +84,7 @@ const handSchema = gql`
     name:String
     owner:User
     tracks (first: Int, after: ID, played: Boolean):Tracks
+    nowPlaying:Track
   }
 
   type Query {
@@ -137,14 +138,43 @@ const resolvers = {
     channel: async (_, { id }, ctx) => {
       const dbId = fromBase26(id)
       const [channelRow] = await pg('channels').select('*').where({ id: dbId })
-      return { ...channelRow, id, dbId }
+
+      const channelObj = { ...channelRow, id, dbId }
+
+      if (channelObj.now_playing) {
+        // on song insert it can set now playing
+
+      } else {
+        const [nowPlaying] = await pg('tracks').select('*').where({
+          channel: dbId,
+          played: false
+        }).orderBy('added_on', 'asc').limit(1)
+
+
+        channelObj.__nowPlaying = nowPlaying
+
+        if (nowPlaying) {
+          const updatedOnTable = await pg('channels').update({ now_playing: nowPlaying.id }).where({ id: dbId })
+          console.log('Updated now playying on channel')
+        }
+      }
+
+      return channelObj
+
     }
   },
   Channel: {
     createdOn: () => 'CREATED ONNN',
     owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
+
     tracks: async (parent, { first, after, played }, ctx) => {
       console.log('PARENT', parent)
+
+
+      // GET THE NOW PLAYING TRACK FROM CHANNEL
+
+      //
+
 
       const whereClause: { channel: string, played?: boolean } = { channel: parent.dbId }
 
@@ -152,11 +182,39 @@ const resolvers = {
         whereClause.played = played
       }
 
-      const tracks = await pg('tracks').select('*').where(whereClause).orderBy('added_on', 'asc')
-      console.log('TRACKS', whereClause, tracks)
-      const edges = tracks.map(track => ({ cursor: track.id, node: track }))
+      const tracks = await pg('tracks').select('*').where(function() {
+        this.where(whereClause).andWhere((function() {
+          if (played === false) {
+            this.where('tracks.id', '!=', parent.now_playing)
+          }
+        }))
+
+      }).orderBy('added_on', 'asc')
+
+      const edges = tracks.map(track => ({
+        cursor: track.id,
+        node: { ...track, played: track.id === parent.now_playing ? 'now' : track.played }
+      }))
 
       return { totalCount: tracks.length, edges }
+    },
+    nowPlaying: async (parent, _, ctx: TContext) => {
+
+      const getNowPlaying = async () => {
+        if (parent.__nowPlaying) {
+          return parent.__nowPlaying
+        } else if (parent.now_playing) {
+          return ctx.loaders.tracks.load(parent.now_playing)
+        }
+      }
+
+      const tReturn = await getNowPlaying()
+
+      if (tReturn) {
+        return { ...tReturn, played: 'now' }
+      }
+
+
     }
   },
   Mutation: {
@@ -181,7 +239,6 @@ const resolvers = {
       if (updateResp.length === 0) {
         throw 'Unable to mark track as played, please make sure your viewing the right party under the right Google Account'
       }
-
 
       console.log('UPDATED TRACK ', updateResp[0])
       pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp[0] })
