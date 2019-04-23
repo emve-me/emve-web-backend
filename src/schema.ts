@@ -115,8 +115,6 @@ const handSchema = gql`
     trackUpdated(input:TrackUpdatedInput!): Track
   }
 `
-
-
 const resolvers = {
   User: {
     // todo: when needed, wrap email behind security
@@ -235,7 +233,7 @@ const resolvers = {
         id: track,
         channel: channelsOwner
       }).returning('*')
-      
+
       const [updateResp] = await updateQuery
 
       if (updateResp) {
@@ -283,15 +281,28 @@ const resolvers = {
                       TContext
     ) {
 
+      const channelId = fromBase26(channel)
       const [videoAddedResponse] = await pg('tracks').insert({
-        channel: fromBase26(channel),
+        channel: channelId,
         video_id: videoId,
         title,
         owner: pg('users').select('id').where({ google_id: ctx.user.sub })
       }).returning('*')
 
+
       videoAddedResponse.channel = channel
-      pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: videoAddedResponse })
+
+      const [{ now_playing }] = await pg('channels').select('now_playing').where({ id: channelId })
+
+      console.log('Now playing on ADD!', now_playing)
+
+      if (!now_playing) {
+        videoAddedResponse.played = 'now'
+        pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: videoAddedResponse })
+        await pg('channels').update({ now_playing: videoAddedResponse.id }).where({ id: channelId })
+      } else {
+        pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: videoAddedResponse })
+      }
 
       return videoAddedResponse
     }
