@@ -72,7 +72,6 @@ const handSchema = gql`
     videoId: ID
     title: String
     owner: User
-    channel: Channel
     addedOn: String
     state: TrackState
   }
@@ -228,24 +227,20 @@ const resolvers = {
         owner: channelOwnerQuery
       })
 
-
-      const updateQuery = pg('tracks').update({ played: true }).where({
+      const [updateResp] = await pg('tracks').update({ played: true }).where({
         id: track,
         channel: channelsOwner
       }).returning('*')
 
-      const [updateResp] = await updateQuery
-
       if (updateResp) {
+        console.log('updateResp__', updateResp)
+        pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp })
+
         const updateChannelResp = await pg('channels').update({ now_playing: nextTrack || null }).where({ id: updateResp.channel }).returning('*')
       } else {
         // set now playing on channel
         throw 'Unable to mark track as played, please make sure your viewing the right party under the right Google Account'
-
       }
-
-      //console.log('UPDATED TRACK ', updateResp[0])
-      //  pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp[0] })
 
       return track
     },
@@ -290,7 +285,7 @@ const resolvers = {
       }).returning('*')
 
 
-      videoAddedResponse.channel = channel
+      // videoAddedResponse.channel = channel
 
       const [{ now_playing }] = await pg('channels').select('now_playing').where({ id: channelId })
 
@@ -336,9 +331,7 @@ const resolvers = {
       subscribe: withFilter(
         () => pubsub.asyncIterator(PUBSUB_CHANNEL),
         (payload, variables) => {
-
-          console.log('subscribe', { payload, variables })
-          return payload.trackUpdated.channel === variables.input.channel
+          return payload.trackUpdated.channel.toString() === fromBase26(variables.input.channel).toString()
         }
       )
     }
