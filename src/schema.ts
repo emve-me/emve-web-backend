@@ -234,7 +234,14 @@ const resolvers = {
 
       if (updateResp) {
         console.log('updateResp__', updateResp)
+
         pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp })
+
+        if (nextTrack) {
+          const [trackInfo] = await pg('tracks').select('*').where({ id: nextTrack })
+          trackInfo.played = 'now'
+          pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: trackInfo })
+        }
 
         const updateChannelResp = await pg('channels').update({ now_playing: nextTrack || null }).where({ id: updateResp.channel }).returning('*')
       } else {
@@ -325,7 +332,6 @@ const resolvers = {
       return resp
     }
   },
-
   Subscription: {
     trackUpdated: {
       subscribe: withFilter(
