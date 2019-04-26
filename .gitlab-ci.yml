@@ -1,6 +1,7 @@
 deploy:
   image: "rlancer/gcloud-node:1.0.2"
   script:
+    - rm Dockerfile
     - npm i
     - npm run build
     - echo $GCLOUD_SERVICE > /tmp/$CI_PIPELINE_ID.json
