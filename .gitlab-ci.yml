@@ -1,0 +1,12 @@
+deploy:
+  image: "rlancer/gcloud-node:1.0.2"
+  script:
+    - npm i
+    - npm run build
+    - echo $GCLOUD_SERVICE > /tmp/$CI_PIPELINE_ID.json
+    - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
+    - gcloud --quiet --project $GCLOUD_PROJECT_ID app deploy app.yaml
+  tags:
+    - theonlyrunnerthatshouldeverbeusedbycollaborizm
+  only:
+    - prod

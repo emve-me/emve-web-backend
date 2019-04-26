@@ -74,6 +74,7 @@ const handSchema = gql`
     owner: User
     addedOn: String
     state: TrackState
+    thumb: String
   }
 
 
@@ -127,6 +128,7 @@ const resolvers = {
   Track: {
     owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
     videoId: ({ video_id }) => video_id,
+    thumb: ({ video_id }) => `https://i.ytimg.com/vi/${video_id}/hqdefault.jpg`,
     state: ({ played }) => {
       if (played === true) {
         return 'played'
