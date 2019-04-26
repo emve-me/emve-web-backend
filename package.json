@@ -36,12 +36,16 @@
   "devDependencies": {
     "@types/jsonwebtoken": "^8.3.2",
     "@types/shortid": "0.0.29",
-    "apollo": "^2.8.3",
+    "apollo": "^2.9.0",
     "gql-schema-dl": "0.0.5",
     "gql2ts": "^1.10.1",
     "nodemon": "^1.18.11",
     "prettier": "^1.17.0",
     "ts-node": "^8.1.0",
     "typescript": "^3.4.5"
+  },
+  "engines": {
+    "node": "10.x.x",
+    "npm": "6.9.0"
   }
 }
