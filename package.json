@@ -6,6 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --watch src -e ts --exec \"ts-node --files -r dotenv/config src/server\"",
+    "build": "tsc",
+    "start": "node dist/server",
     "codegen": "apollo client:codegen --target typescript --includes src/**/*.ts",
     "download-gql-schema": "gql-schema-dl http://localhost:4000",
     "gql-types": "npm run download-gql-schema && gql2ts schema.graphql -o graphqlTypes.d.ts"
