@@ -5,3 +5,7 @@ service: api
 
 env_variables:
   NODE_ENV: 'production'
+
+
+beta_settings:
+  cloud_sql_instances: emvemeapp:us-east4:emve-db
