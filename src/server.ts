@@ -67,7 +67,7 @@ const port = process.env.PORT || 4000
 server
   .listen({ port })
   .then(({ url, subscriptionsUrl }) => {
-    console.log(`🚀    Server ready at ${url}`)
-    console.log(`🚀    WS ready at ${subscriptionsUrl}`)
+    console.log(`🚀Server ready at ${url}`)
+    console.log(`WS ready at ${subscriptionsUrl}`)
   })
   .catch(err => console.log(err))
