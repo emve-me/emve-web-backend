@@ -1,5 +1,7 @@
 runtime: nodejs
 env: flex
 
+service: api
+
 env_variables:
   NODE_ENV: 'production'
