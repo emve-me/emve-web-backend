@@ -24,8 +24,8 @@ const server = new ApolloServer({
     console.error(error)
     return error
   },
-  introspection: true,
-  playground: {
+  introspection: !IS_PRODUCTION,
+  playground: IS_PRODUCTION ? false : {
     settings: {
       'general.betaUpdates': false,
       'editor.cursorShape': 'line',
@@ -62,7 +62,7 @@ const server = new ApolloServer({
   }
 })
 
-const port = process.env.PORT || 4000
+const port = process.env.PORT
 
 server
   .listen({ port })
