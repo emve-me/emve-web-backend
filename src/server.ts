@@ -4,7 +4,7 @@ import { now, pg } from './knex'
 import jwt from 'jsonwebtoken'
 import DataLoader from 'dataloader'
 
-const IS_PRODUCTION = process.env.PORT === 'production'
+const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
 const getUsers = async (keys) => await pg('users').select('*').whereIn('id', keys)
 
