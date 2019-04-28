@@ -7,6 +7,7 @@ import { TContext } from '../global'
 import { pg, upsert } from './knex'
 import { fromBase26, toBase26 } from './Base26'
 import IMarkTrackAsPlayedOnMutationArguments = GQL.IMarkTrackAsPlayedOnMutationArguments
+import { dateResolver } from './dateResolver'
 
 const PUBSUB_CHANNEL = 'VIDEO_ADDED'
 
@@ -117,6 +118,7 @@ const handSchema = gql`
 `
 const resolvers = {
   User: {
+    createdOn: ({ createdOn }) => dateResolver(createdOn),
     // todo: when needed, wrap email behind security
     email: () => null,
     googleId: () => null,
@@ -126,6 +128,7 @@ const resolvers = {
     lastName: ({ last_name }) => last_name
   },
   Track: {
+    addedOn: ({ addedOn }) => dateResolver(addedOn),
     owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
     videoId: ({ video_id }) => video_id,
     thumb: ({ video_id }) => `https://i.ytimg.com/vi/${video_id}/hqdefault.jpg`,
@@ -169,7 +172,7 @@ const resolvers = {
     }
   },
   Channel: {
-    createdOn: () => 'CREATED ONNN',
+    createdOn: ({ createdOn }) => dateResolver(createdOn),
     owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
 
     tracks: async (parent, { first, after, played }, ctx) => {
