@@ -1,11 +1,23 @@
 import { ApolloServer, gql } from 'apollo-server'
 import { schema } from './schema'
 import { pg } from './knex'
-import jwt from 'jsonwebtoken'
 import DataLoader from 'dataloader'
 import { TUser } from '../global'
+import { OAuth2Client } from 'google-auth-library'
 
-const IS_PRODUCTION = process.env.NODE_ENV === 'production'
+const { OAUTH_CLIENT_ID, NODE_ENV, PORT } = process.env
+
+const client = new OAuth2Client(OAUTH_CLIENT_ID)
+
+async function verify(token): Promise<TUser> {
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: OAUTH_CLIENT_ID as string
+  })
+  return ticket.getPayload() as TUser
+}
+
+const IS_PRODUCTION = NODE_ENV === 'production'
 
 const getUsers = async keys =>
   await pg('users')
@@ -56,7 +68,10 @@ const server = new ApolloServer({
       const { authorization } = req.headers
 
       if (authorization) {
-        const user = jwt.decode(authorization.replace('Bearer ', '')) as TUser
+        const googleIdToken = authorization.replace('Bearer ', '')
+
+        const user = await verify(googleIdToken)
+
         const loaders = createLoaders({ user })
         user.getDBUser = async () => {
           if (user._dbUser) {
@@ -80,10 +95,8 @@ const server = new ApolloServer({
   }
 })
 
-const port = process.env.PORT
-
 server
-  .listen({ port })
+  .listen({ port: PORT })
   .then(({ url, subscriptionsUrl }) => {
     console.log(`🚀Server ready at ${url}`)
     console.log(`WS ready at ${subscriptionsUrl}`)
