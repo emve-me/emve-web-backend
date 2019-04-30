@@ -110,7 +110,7 @@ const handSchema = gql`
   type Mutation {
     channelCreate(input: ChannelCreateInput!): ID
     videoPush(input: VideoPushInput!): Track
-    authenticate: ID
+    authenticate: User
     removeTrack(input: RemoveTrackInput!): ID
     markTrackAsPlayed(input: MarkTrakAsPlayedInput!): ID
     channelJoin(input: ChannelJoinInput!): Channel
@@ -371,7 +371,7 @@ const resolvers = {
         key: 'google_id'
       })
 
-      return upsertResponse.id
+      return upsertResponse
     },
     async videoPush(_, { input: { channel, videoId, title } }: GQL.IVideoPushOnMutationArguments, ctx: TContext) {
       const channelId = fromBase26(channel)
