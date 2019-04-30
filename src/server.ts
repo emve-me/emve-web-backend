@@ -68,24 +68,29 @@ const server = new ApolloServer({
       const { authorization } = req.headers
 
       if (authorization) {
-        const googleIdToken = authorization.replace('Bearer ', '')
+        try {
+          const googleIdToken = authorization.replace('Bearer ', '')
 
-        const user = await verify(googleIdToken)
+          const user = await verify(googleIdToken)
 
-        const loaders = createLoaders({ user })
-        user.getDBUser = async () => {
-          if (user._dbUser) {
-            console.log('returned DB ID FROM CACHE', user._dbUser)
+          const loaders = createLoaders({ user })
+          user.getDBUser = async () => {
+            if (user._dbUser) {
+              console.log('returned DB ID FROM CACHE', user._dbUser)
+              return user._dbUser
+            }
+
+            user._dbUser = (await pg('users')
+              .select('*')
+              .where({ google_id: user.sub }))[0]
+
             return user._dbUser
           }
 
-          user._dbUser = (await pg('users')
-            .select('*')
-            .where({ google_id: user.sub }))[0]
-
-          return user._dbUser
+          return { loaders, user }
+        } catch (e) {
+          console.error('Error creating context', e)
         }
-        return { loaders, user }
       }
     }
 
