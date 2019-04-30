@@ -95,6 +95,7 @@ const handSchema = gql`
 
   type Query {
     channel(id: ID!): Channel
+    loggedInUser: User
   }
 
   input MarkTrakAsPlayedInput {
@@ -152,6 +153,13 @@ const resolvers = {
     }
   },
   Query: {
+    loggedInUser: async (_, __, ctx: TContext) => {
+      if (!ctx.user) {
+        return null
+      }
+
+      return await ctx.user.getDBUser()
+    },
     channel: async (_, { id }, ctx) => {
       const dbId = fromBase26(id)
       const [channelRow] = await pg('channels')
@@ -212,7 +220,7 @@ const resolvers = {
         node: { ...track, played: track.id === parent.now_playing ? 'now' : track.played }
       }))
 
-      return { totalCount: tracks.length, edges }
+      return { totalCount: tracks.length, edges, channel_owner: parent.owner }
     },
     nowPlaying: async (parent, _, ctx: TContext) => {
       const getNowPlaying = async () => {
@@ -226,7 +234,7 @@ const resolvers = {
       const tReturn = await getNowPlaying()
 
       if (tReturn) {
-        return { ...tReturn, played: 'now' }
+        return { ...tReturn, played: 'now', channel_owner: parent.owner }
       }
     }
   },
@@ -244,7 +252,7 @@ const resolvers = {
           'channel'
         )
 
-      const loggedInUserId = await ctx.user.getDBId()
+      const loggedInUserId = (await ctx.user.getDBUser()).id
 
       const isChannelOwner = trackToRemove.channelOwner === loggedInUserId
       const isTrackOwner = (trackToRemove.trackOwner = loggedInUserId)
@@ -261,7 +269,6 @@ const resolvers = {
         })
 
       if (trackToRemove.now_playing === track && isChannelOwner) {
-        console.log('removing now playing ', track)
         pushToChannel()
       } else if (isChannelOwner || isTrackOwner) {
         pushToChannel()

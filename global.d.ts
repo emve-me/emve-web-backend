@@ -16,8 +16,10 @@ export type TUser = {
   iat
   exp
   jti
-  getDBId: () => Promise<string>
+  _dbUser: any
+  getDBUser: () => Promise<any>
 }
+// todo replace any with strong type
 
 export type TContext = {
   loaders: {

@@ -12,6 +12,7 @@ const getUsers = async keys =>
     .select('*')
     .whereIn('id', keys)
 
+// join the channel owner here expose to resolver
 const getTracks = async keys =>
   await pg('tracks')
     .select('*')
@@ -27,7 +28,6 @@ function createLoaders({ user }: { user? }) {
 const server = new ApolloServer({
   schema,
   cors: true,
-
   formatError: error => {
     console.error(error)
     return error
@@ -58,10 +58,18 @@ const server = new ApolloServer({
       if (authorization) {
         const user = jwt.decode(authorization.replace('Bearer ', '')) as TUser
         const loaders = createLoaders({ user })
-        user.getDBId = async () =>
-          (await pg('users')
-            .select('id')
-            .where({ google_id: user.sub }))[0].id
+        user.getDBUser = async () => {
+          if (user._dbUser) {
+            console.log('returned DB ID FROM CACHE', user._dbUser)
+            return user._dbUser
+          }
+
+          user._dbUser = (await pg('users')
+            .select('*')
+            .where({ google_id: user.sub }))[0]
+
+          return user._dbUser
+        }
         return { loaders, user }
       }
     }
