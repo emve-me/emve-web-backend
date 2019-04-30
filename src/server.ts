@@ -1,6 +1,6 @@
 import { ApolloServer, gql } from 'apollo-server'
 import { schema } from './schema'
-import { now, pg } from './knex'
+import { pg } from './knex'
 import jwt from 'jsonwebtoken'
 import DataLoader from 'dataloader'
 import { TUser } from '../global'

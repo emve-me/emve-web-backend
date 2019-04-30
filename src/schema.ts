@@ -9,9 +9,9 @@ import { fromBase26, toBase26 } from './Base26'
 import IMarkTrackAsPlayedOnMutationArguments = GQL.IMarkTrackAsPlayedOnMutationArguments
 import { dateResolver } from './dateResolver'
 import IRemoveTrackOnMutationArguments = GQL.IRemoveTrackOnMutationArguments
-import { log } from 'util'
 
 const PUBSUB_CHANNEL = 'VIDEO_ADDED'
+const PUBSUB_PLAYER = 'PLAYER_CONTROL'
 
 export const pubsub = new PubSub()
 
@@ -120,8 +120,25 @@ const handSchema = gql`
     channel: ID
   }
 
+  input PlayerControlInput {
+    channel: ID
+  }
+
+  enum PlayerControlAction {
+    PAUSE
+    PLAY
+    SKIP
+    FULLSCREEN
+    EXIT_FULLSCREEN
+  }
+
+  type PlayerControl {
+    action: PlayerControlAction
+  }
+
   type Subscription {
     trackUpdated(input: TrackUpdatedInput!): Track
+    playerControl(input: PlayerControlInput!): PlayerControl
   }
 `
 const resolvers = {
@@ -257,7 +274,15 @@ const resolvers = {
       const isChannelOwner = trackToRemove.channelOwner === loggedInUserId
       const isTrackOwner = (trackToRemove.trackOwner = loggedInUserId)
 
-      const pushToChannel = () =>
+      if (trackToRemove.now_playing === track && isChannelOwner) {
+        console.log('issued pubsub to ski[')
+        pubsub.publish(PUBSUB_PLAYER, {
+          channel: trackToRemove.channel,
+          playerControl: {
+            action: 'SKIP'
+          }
+        })
+      } else if (isChannelOwner || isTrackOwner) {
         pubsub.publish(PUBSUB_CHANNEL, {
           trackUpdated: {
             id: track,
@@ -268,10 +293,6 @@ const resolvers = {
           }
         })
 
-      if (trackToRemove.now_playing === track && isChannelOwner) {
-        pushToChannel()
-      } else if (isChannelOwner || isTrackOwner) {
-        pushToChannel()
         const deleteResp = await pg('tracks')
           .delete()
           .where({ id: track })
@@ -371,8 +392,6 @@ const resolvers = {
         .select('now_playing')
         .where({ id: channelId })
 
-      console.log('Now playing on ADD!', now_playing)
-
       if (!now_playing) {
         videoAddedResponse.played = 'now'
         pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: videoAddedResponse })
@@ -416,6 +435,15 @@ const resolvers = {
         () => pubsub.asyncIterator(PUBSUB_CHANNEL),
         (payload, variables) => {
           return payload.trackUpdated.channel.toString() === fromBase26(variables.input.channel).toString()
+        }
+      )
+    },
+    playerControl: {
+      subscribe: withFilter(
+        () => pubsub.asyncIterator(PUBSUB_PLAYER),
+        (payload, variables) => {
+          console.log('PLAYER CONTROL PUBSUB', { payload, variables })
+          return payload.channel.toString() === fromBase26(variables.input.channel).toString()
         }
       )
     }
