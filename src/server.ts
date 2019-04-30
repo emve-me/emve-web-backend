@@ -3,12 +3,19 @@ import { schema } from './schema'
 import { now, pg } from './knex'
 import jwt from 'jsonwebtoken'
 import DataLoader from 'dataloader'
+import { TUser } from '../global'
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
-const getUsers = async (keys) => await pg('users').select('*').whereIn('id', keys)
+const getUsers = async keys =>
+  await pg('users')
+    .select('*')
+    .whereIn('id', keys)
 
-const getTracks = async (keys) => await pg('tracks').select('*').whereIn('id', keys)
+const getTracks = async keys =>
+  await pg('tracks')
+    .select('*')
+    .whereIn('id', keys)
 
 function createLoaders({ user }: { user? }) {
   return {
@@ -18,40 +25,43 @@ function createLoaders({ user }: { user? }) {
 }
 
 const server = new ApolloServer({
-  schema, cors: true,
+  schema,
+  cors: true,
 
-  formatError: (error) => {
+  formatError: error => {
     console.error(error)
     return error
   },
   introspection: !IS_PRODUCTION,
-  playground: IS_PRODUCTION ? false : {
-    settings: {
-      'general.betaUpdates': false,
-      'editor.cursorShape': 'line',
-      'editor.fontSize': 14,
-      'editor.fontFamily': '\'Source Code Pro\', \'Consolas\', \'Inconsolata\', \'Droid Sans Mono\', \'Monaco\', monospace',
-      'editor.theme': 'light',
-      'editor.reuseHeaders': true,
-      'prettier.printWidth': 80,
-      'request.credentials': 'omit',
-      'tracing.hideTracingResponse': true
-    }
-  },
-  context: async ({ req, res, connection }: { req, res, connection? }) => {
-
+  playground: IS_PRODUCTION
+    ? false
+    : {
+        settings: {
+          'general.betaUpdates': false,
+          'editor.cursorShape': 'line',
+          'editor.fontSize': 14,
+          'editor.fontFamily': "'Source Code Pro', 'Consolas', 'Inconsolata', 'Droid Sans Mono', 'Monaco', monospace",
+          'editor.theme': 'light',
+          'editor.reuseHeaders': true,
+          'prettier.printWidth': 80,
+          'request.credentials': 'omit',
+          'tracing.hideTracingResponse': true
+        }
+      },
+  context: async ({ req, res, connection }: { req; res; connection? }) => {
     if (connection) {
       // Use this to authenticate context, connection.context
-
-
       return { loaders: createLoaders({}) }
-
     } else if (req) {
       const { authorization } = req.headers
 
       if (authorization) {
-        const user = jwt.decode(authorization.replace('Bearer ', ''))
+        const user = jwt.decode(authorization.replace('Bearer ', '')) as TUser
         const loaders = createLoaders({ user })
+        user.getDBId = async () =>
+          (await pg('users')
+            .select('id')
+            .where({ google_id: user.sub }))[0].id
         return { loaders, user }
       }
     }
@@ -63,7 +73,6 @@ const server = new ApolloServer({
 })
 
 const port = process.env.PORT
-
 
 server
   .listen({ port })

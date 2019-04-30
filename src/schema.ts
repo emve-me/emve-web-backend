@@ -8,6 +8,8 @@ import { pg, upsert } from './knex'
 import { fromBase26, toBase26 } from './Base26'
 import IMarkTrackAsPlayedOnMutationArguments = GQL.IMarkTrackAsPlayedOnMutationArguments
 import { dateResolver } from './dateResolver'
+import IRemoveTrackOnMutationArguments = GQL.IRemoveTrackOnMutationArguments
+import { log } from 'util'
 
 const PUBSUB_CHANNEL = 'VIDEO_ADDED'
 
@@ -31,7 +33,7 @@ const handSchema = gql`
     channelName: String
   }
 
-  input ChannelJoinInput{
+  input ChannelJoinInput {
     channelId: ID!
   }
 
@@ -65,7 +67,10 @@ const handSchema = gql`
   }
 
   enum TrackState {
-    playing, played, upcoming
+    playing
+    played
+    upcoming
+    remove
   }
 
   type Track {
@@ -78,42 +83,44 @@ const handSchema = gql`
     thumb: String
   }
 
-
   type Channel {
-    id:ID
-    createdOn:String
+    id: ID
+    createdOn: String
     track: Track
-    name:String
-    owner:User
-    tracks (first: Int, after: ID, played: Boolean):Tracks
-    nowPlaying:Track
+    name: String
+    owner: User
+    tracks(first: Int, after: ID, played: Boolean): Tracks
+    nowPlaying: Track
   }
 
   type Query {
-    channel (id: ID!):Channel
-
+    channel(id: ID!): Channel
   }
 
   input MarkTrakAsPlayedInput {
-    track:ID!
-    nextTrack:ID
+    track: ID!
+    nextTrack: ID
+  }
+
+  input RemoveTrackInput {
+    track: ID!
   }
 
   type Mutation {
     channelCreate(input: ChannelCreateInput!): ID
     videoPush(input: VideoPushInput!): Track
-    authenticate:ID
-
-    markTrackAsPlayed(input:MarkTrakAsPlayedInput!): ID
-    channelJoin(input:ChannelJoinInput!):Channel
+    authenticate: ID
+    removeTrack(input: RemoveTrackInput!): ID
+    markTrackAsPlayed(input: MarkTrakAsPlayedInput!): ID
+    channelJoin(input: ChannelJoinInput!): Channel
   }
 
   input TrackUpdatedInput {
-    channel:ID
+    channel: ID
   }
 
   type Subscription {
-    trackUpdated(input:TrackUpdatedInput!): Track
+    trackUpdated(input: TrackUpdatedInput!): Track
   }
 `
 const resolvers = {
@@ -139,36 +146,43 @@ const resolvers = {
         return 'upcoming'
       } else if (played === 'now') {
         return 'playing'
+      } else if (played === 'remove') {
+        return 'remove'
       }
     }
   },
   Query: {
     channel: async (_, { id }, ctx) => {
       const dbId = fromBase26(id)
-      const [channelRow] = await pg('channels').select('*').where({ id: dbId })
+      const [channelRow] = await pg('channels')
+        .select('*')
+        .where({ id: dbId })
 
       const channelObj = { ...channelRow, id, dbId }
 
       if (channelObj.now_playing) {
         // on song insert it can set now playing
-
       } else {
-        const [nowPlaying] = await pg('tracks').select('*').where({
-          channel: dbId,
-          played: false
-        }).orderBy('added_on', 'asc').limit(1)
-
+        const [nowPlaying] = await pg('tracks')
+          .select('*')
+          .where({
+            channel: dbId,
+            played: false
+          })
+          .orderBy('added_on', 'asc')
+          .limit(1)
 
         channelObj.__nowPlaying = nowPlaying
 
         if (nowPlaying) {
-          const updatedOnTable = await pg('channels').update({ now_playing: nowPlaying.id }).where({ id: dbId })
+          const updatedOnTable = await pg('channels')
+            .update({ now_playing: nowPlaying.id })
+            .where({ id: dbId })
           console.log('Updated now playying on channel')
         }
       }
 
       return channelObj
-
     }
   },
   Channel: {
@@ -176,21 +190,22 @@ const resolvers = {
     owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),
 
     tracks: async (parent, { first, after, played }, ctx) => {
-
-      const whereClause: { channel: string, played?: boolean } = { channel: parent.dbId }
+      const whereClause: { channel: string; played?: boolean } = { channel: parent.dbId }
 
       if (played !== undefined) {
         whereClause.played = played
       }
 
-      const tracks = await pg('tracks').select('*').where(function() {
-        this.where(whereClause).andWhere((function() {
-          if (played === false) {
-            this.where('tracks.id', '!=', parent.now_playing)
-          }
-        }))
-
-      }).orderBy('added_on', 'asc')
+      const tracks = await pg('tracks')
+        .select('*')
+        .where(function() {
+          this.where(whereClause).andWhere(function() {
+            if (played === false) {
+              this.where('tracks.id', '!=', parent.now_playing)
+            }
+          })
+        })
+        .orderBy('added_on', 'asc')
 
       const edges = tracks.map(track => ({
         cursor: track.id,
@@ -200,7 +215,6 @@ const resolvers = {
       return { totalCount: tracks.length, edges }
     },
     nowPlaying: async (parent, _, ctx: TContext) => {
-
       const getNowPlaying = async () => {
         if (parent.__nowPlaying) {
           return parent.__nowPlaying
@@ -214,41 +228,89 @@ const resolvers = {
       if (tReturn) {
         return { ...tReturn, played: 'now' }
       }
-
-
     }
   },
   Mutation: {
-    markTrackAsPlayed: async (parent, args: IMarkTrackAsPlayedOnMutationArguments, ctx: TContext) => {
+    removeTrack: async (parent, { input: { track } }: IRemoveTrackOnMutationArguments, ctx: TContext) => {
+      const [trackToRemove] = await pg('tracks')
+        .join('channels', 'tracks.channel', '=', 'channels.id')
+        .where({ 'tracks.id': track })
+        .select(
+          'channels.now_playing',
+          { channelOwner: 'channels.owner' },
+          { trackId: 'tracks.id' },
+          { trackOwner: 'tracks.owner' },
+          'video_id',
+          'channel'
+        )
 
+      const loggedInUserId = await ctx.user.getDBId()
+
+      const isChannelOwner = trackToRemove.channelOwner === loggedInUserId
+      const isTrackOwner = (trackToRemove.trackOwner = loggedInUserId)
+
+      const pushToChannel = () =>
+        pubsub.publish(PUBSUB_CHANNEL, {
+          trackUpdated: {
+            id: track,
+            played: 'remove',
+            channel: trackToRemove.channel,
+            owner: trackToRemove.trackOwner,
+            video_id: trackToRemove.video_id
+          }
+        })
+
+      if (trackToRemove.now_playing === track && isChannelOwner) {
+        console.log('removing now playing ', track)
+        pushToChannel()
+      } else if (isChannelOwner || isTrackOwner) {
+        pushToChannel()
+        const deleteResp = await pg('tracks')
+          .delete()
+          .where({ id: track })
+          .limit(1)
+        console.log({ deleteResp })
+      }
+    },
+    markTrackAsPlayed: async (parent, args: IMarkTrackAsPlayedOnMutationArguments, ctx: TContext) => {
       const { nextTrack, track } = args.input
       // get track // get channel from track // see if channel is owned by tgit a
       // query makes sure that only the owner of the channel can mark the track as played
 
-      const channelOwnerQuery = pg('users').select('id').where({ google_id: ctx.user.sub })
+      const channelOwnerQuery = pg('users')
+        .select('id')
+        .where({ google_id: ctx.user.sub })
 
-      const channelsOwner = pg('channels').select('id').where({
-        id: pg.raw('tracks.channel'),
-        owner: channelOwnerQuery
-      })
+      const channelsOwner = pg('channels')
+        .select('id')
+        .where({
+          id: pg.raw('tracks.channel'),
+          owner: channelOwnerQuery
+        })
 
-      const [updateResp] = await pg('tracks').update({ played: true }).where({
-        id: track,
-        channel: channelsOwner
-      }).returning('*')
+      const [updateResp] = await pg('tracks')
+        .update({ played: true })
+        .where({
+          id: track,
+          channel: channelsOwner
+        })
+        .returning('*')
 
       if (updateResp) {
-        console.log('updateResp__', updateResp)
-
         pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: updateResp })
 
         if (nextTrack) {
-          const [trackInfo] = await pg('tracks').select('*').where({ id: nextTrack })
+          const [trackInfo] = await pg('tracks')
+            .select('*')
+            .where({ id: nextTrack })
           trackInfo.played = 'now'
           pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: trackInfo })
         }
 
-        const updateChannelResp = await pg('channels').update({ now_playing: nextTrack || null }).where({ id: updateResp.channel }).returning('*')
+        const updateChannelResp = await pg('channels')
+          .update({ now_playing: nextTrack || null })
+          .where({ id: updateResp.channel })
+          .returning('*')
       } else {
         // set now playing on channel
         throw 'Unable to mark track as played, please make sure your viewing the right party under the right Google Account'
@@ -268,7 +330,8 @@ const resolvers = {
       } = ctx.user
 
       const upsertResponse = await upsert({
-        table: 'users', object: {
+        table: 'users',
+        object: {
           google_id,
           email,
           email_verified,
@@ -276,64 +339,67 @@ const resolvers = {
           first_name,
           last_name,
           locale
-        }, key: 'google_id'
+        },
+        key: 'google_id'
       })
 
       return upsertResponse.id
     },
-    async videoPush(_, { input: { channel, videoId, title } }
-      :
-      GQL.IVideoPushOnMutationArguments, ctx
-                      :
-                      TContext
-    ) {
-
+    async videoPush(_, { input: { channel, videoId, title } }: GQL.IVideoPushOnMutationArguments, ctx: TContext) {
       const channelId = fromBase26(channel)
-      const [videoAddedResponse] = await pg('tracks').insert({
-        channel: channelId,
-        video_id: videoId,
-        title,
-        owner: pg('users').select('id').where({ google_id: ctx.user.sub })
-      }).returning('*')
-
+      const [videoAddedResponse] = await pg('tracks')
+        .insert({
+          channel: channelId,
+          video_id: videoId,
+          title,
+          owner: pg('users')
+            .select('id')
+            .where({ google_id: ctx.user.sub })
+        })
+        .returning('*')
 
       // videoAddedResponse.channel = channel
 
-      const [{ now_playing }] = await pg('channels').select('now_playing').where({ id: channelId })
+      const [{ now_playing }] = await pg('channels')
+        .select('now_playing')
+        .where({ id: channelId })
 
       console.log('Now playing on ADD!', now_playing)
 
       if (!now_playing) {
         videoAddedResponse.played = 'now'
         pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: videoAddedResponse })
-        await pg('channels').update({ now_playing: videoAddedResponse.id }).where({ id: channelId })
+        await pg('channels')
+          .update({ now_playing: videoAddedResponse.id })
+          .where({ id: channelId })
       } else {
         pubsub.publish(PUBSUB_CHANNEL, { trackUpdated: videoAddedResponse })
       }
 
       return videoAddedResponse
-    }
-    ,
-    async channelCreate(_, { input: { channelName } }
-      :
-      GQL.IChannelCreateOnMutationArguments, ctx
-                          :
-                          TContext
-    ):
-      Promise<string> {
-      const [newChannelResp] = await pg('channels').insert({
-        name: channelName,
-        owner: pg('users').select('id').where({ google_id: ctx.user.sub })
-      }, 'id')
+    },
+    async channelCreate(
+      _,
+      { input: { channelName } }: GQL.IChannelCreateOnMutationArguments,
+      ctx: TContext
+    ): Promise<string> {
+      const [newChannelResp] = await pg('channels').insert(
+        {
+          name: channelName,
+          owner: pg('users')
+            .select('id')
+            .where({ google_id: ctx.user.sub })
+        },
+        'id'
+      )
 
       return toBase26(newChannelResp)
     },
-    async channelJoin(_, { input: { channelId } }
-      :
-      GQL.IChannelJoinOnMutationArguments
-    ) {
+    async channelJoin(_, { input: { channelId } }: GQL.IChannelJoinOnMutationArguments) {
       const channelIdAsNumber = fromBase26(channelId)
-      const [resp] = await pg('channels').select().where({ id: channelIdAsNumber })
+      const [resp] = await pg('channels')
+        .select()
+        .where({ id: channelIdAsNumber })
       return resp
     }
   },
@@ -358,7 +424,6 @@ const schema1 = makeExecutableSchema({
   resolvers: ytResolvers
 })
 
-
 const schema2 = makeExecutableSchema({
   typeDefs: handSchema,
   resolvers: resolvers
@@ -366,7 +431,6 @@ const schema2 = makeExecutableSchema({
 
 const newschema = mergeSchemas({
   schemas: [schema1, schema2]
-
 })
 
 export { newschema as schema }
