@@ -20,7 +20,6 @@ export const trackGql = gql`
     thumb: String
   }
 `
-
 export const Track = {
   addedOn: ({ addedOn }) => dateResolver(addedOn),
   owner: (parent, _, ctx: TContext) => ctx.loaders.users.load(parent.owner),

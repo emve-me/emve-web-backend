@@ -1,12 +1,12 @@
 import gapiToGraphQL from 'gapi-to-graphql'
 import YouTubeAPI from 'gapi-to-graphql/google_apis/youtube-v3'
 import { makeExecutableSchema, mergeSchemas } from 'graphql-tools'
-import { mutationGql, Mutation } from './Mutation'
-import { queryGql, Query } from './Query'
+import { mutationGql, Mutation } from './mutation'
+import { queryGql, Query } from './query'
 import { subscriptionGql, Subscription } from './Subscription'
-import { Channel, channelGql } from './Channel'
-import { trackGql, Track } from './Track'
-import { userGql, User } from './User'
+import { Channel, channelGql } from './channel'
+import { trackGql, Track } from './track'
+import { userGql, User } from './user'
 import gql from 'graphql-tag'
 
 const schemaGql = gql`

@@ -21,7 +21,7 @@ declare namespace GQL {
   }
 
   interface IQuery {
-    __typename: 'Query'
+    __typename: 'query.ts'
     YoutubeApi: IYoutubeResources | null
     channel: IChannel | null
   }
@@ -1350,7 +1350,7 @@ declare namespace GQL {
   }
 
   interface IChannel {
-    __typename: 'Channel'
+    __typename: 'channel.ts'
     id: string | null
     createdOn: string | null
     track: ITrack | null
@@ -1378,7 +1378,7 @@ declare namespace GQL {
   }
 
   interface IUser {
-    __typename: 'User'
+    __typename: 'user.ts'
     id: string | null
     googleId: string | null
     email: string | null
