@@ -23,12 +23,14 @@
   },
   "homepage": "https://github.com/rlancer/emve-gql-server#readme",
   "dependencies": {
+    "@types/pg": "^7.4.14",
     "apollo-server": "^2.4.8",
     "dataloader": "^1.4.0",
     "dotenv": "^7.0.0",
     "gapi-to-graphql": "^2.0.5",
     "google-auth-library": "^3.1.2",
     "graphql": "^14.2.1",
+    "graphql-postgres-subscriptions": "^1.0.5",
     "graphql-subscriptions": "^1.1.0",
     "knex": "^0.16.5",
     "pg": "^7.10.0"

@@ -4,6 +4,7 @@ import { pg } from './knex'
 import DataLoader from 'dataloader'
 import { TUser } from '../global'
 import { OAuth2Client } from 'google-auth-library'
+import { GraphQLError } from 'graphql'
 
 const { OAUTH_CLIENT_ID, NODE_ENV, PORT } = process.env
 
@@ -42,7 +43,7 @@ const server = new ApolloServer({
   cors: true,
   formatError: error => {
     console.error(error)
-    return error
+    return new GraphQLError('GraphQL Error')
   },
   introspection: !IS_PRODUCTION,
   playground: IS_PRODUCTION
