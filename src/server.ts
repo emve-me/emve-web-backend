@@ -1,6 +1,6 @@
 import { ApolloServer, gql } from 'apollo-server'
 import { schema } from './schema/schema'
-import { pg } from './dbConnections'
+import { pg } from './db'
 import DataLoader from 'dataloader'
 import { TUser } from '../global'
 import { OAuth2Client } from 'google-auth-library'

@@ -15,14 +15,13 @@ export const fromBase26 = (alpha: string): number => {
   let out = 0
 
   for (let i = 0; i < letters.length; i++) {
-    out += (charCode(letters[letters.length - 1 - i])) * Math.pow(26, i)
+    out += charCode(letters[letters.length - 1 - i]) * Math.pow(26, i)
   }
 
   return out
 }
 
 export const toBase26 = (decimal: number | string): string => {
-
   if (typeof decimal === 'string') {
     decimal = +decimal
   }
@@ -34,7 +33,7 @@ export const toBase26 = (decimal: number | string): string => {
   let out = ''
 
   while (true) {
-    out = abc[((decimal - 1) % 26)] + out
+    out = abc[(decimal - 1) % 26] + out
     decimal = Math.floor((decimal - 1) / 26)
 
     if (decimal === 0) {
