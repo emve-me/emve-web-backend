@@ -6,9 +6,6 @@ service: api
 beta_settings:
   cloud_sql_instances: emvemeapp:us-east4:emve-db
 
-manual_scaling:
-  instances: 1
-
 env_variables:
   NODE_ENV: 'production'
 
