@@ -5,7 +5,7 @@ import { context } from './context'
 
 const { NODE_ENV, PORT } = process.env
 
-const IS_PRODUCTION = NODE_ENV === 'production'
+const isProd = NODE_ENV === 'production'
 
 const server = new ApolloServer({
   schema,
@@ -14,8 +14,8 @@ const server = new ApolloServer({
     console.error(error)
     return new GraphQLError('GraphQL Error')
   },
-  introspection: !IS_PRODUCTION,
-  playground: IS_PRODUCTION
+  introspection: !isProd,
+  playground: isProd
     ? false
     : {
         settings: {
