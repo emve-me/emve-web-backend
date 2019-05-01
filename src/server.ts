@@ -20,12 +20,10 @@ const server = new ApolloServer({
     : {
         settings: {
           'general.betaUpdates': false,
-          'editor.cursorShape': 'line',
           'editor.fontSize': 14,
           'editor.fontFamily': "'Source Code Pro', 'Consolas', 'Inconsolata', 'Droid Sans Mono', 'Monaco', monospace",
           'editor.theme': 'light',
           'editor.reuseHeaders': true,
-          'prettier.printWidth': 80,
           'request.credentials': 'omit',
           'tracing.hideTracingResponse': true
         }
