@@ -7,7 +7,7 @@ import { subscriptionGql, Subscription } from './Subscription'
 import { Channel, channelGql } from './channel'
 import { trackGql, Track } from './track'
 import { userGql, User } from './user'
-import gql from 'graphql-tag'
+import { gql } from 'apollo-server'
 
 const schemaGql = gql`
   schema {

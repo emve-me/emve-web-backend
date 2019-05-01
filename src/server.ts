@@ -1,4 +1,4 @@
-import { ApolloServer, gql } from 'apollo-server'
+import { ApolloServer } from 'apollo-server'
 import { schema } from './schema/schema'
 import { pg } from './db'
 import DataLoader from 'dataloader'

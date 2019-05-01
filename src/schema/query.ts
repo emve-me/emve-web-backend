@@ -1,7 +1,7 @@
 import { TContext } from '../../global'
 import { fromBase26 } from '../base26'
 import { pg } from '../db'
-import gql from 'graphql-tag'
+import { gql } from 'apollo-server'
 
 export const queryGql = gql`
   type Query {

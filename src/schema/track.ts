@@ -1,6 +1,6 @@
 import { dateResolver } from './dateResolver'
 import { TContext } from '../../global'
-import gql from 'graphql-tag'
+import { gql } from 'apollo-server'
 
 export const trackGql = gql`
   enum TrackState {

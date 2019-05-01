@@ -1,4 +1,4 @@
-import gql from 'graphql-tag'
+import { gql } from 'apollo-server'
 import { dateResolver } from './dateResolver'
 
 export const userGql = gql`

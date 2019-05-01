@@ -1,7 +1,7 @@
 import { dateResolver } from './dateResolver'
 import { TContext } from '../../global'
 import { pg } from '../db'
-import gql from 'graphql-tag'
+import { gql } from 'apollo-server'
 
 export const channelGql = gql`
   type TracksEdge {

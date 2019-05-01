@@ -1,10 +1,10 @@
-import gql from 'graphql-tag'
 import { TContext } from '../../global'
 import { pg, pubsub, upsert } from '../db'
 import { fromBase26, toBase26 } from '../base26'
 import IRemoveTrackOnMutationArguments = GQL.IRemoveTrackOnMutationArguments
 import IMarkTrackAsPlayedOnMutationArguments = GQL.IMarkTrackAsPlayedOnMutationArguments
 import { PUBSUB_CHANNEL, PUBSUB_PLAYER } from './Subscription'
+import { gql } from 'apollo-server'
 
 export const mutationGql = gql`
   input VideoPushInput {
