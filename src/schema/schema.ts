@@ -2,11 +2,11 @@ import { gql, withFilter } from 'apollo-server'
 import gapiToGraphQL from 'gapi-to-graphql'
 import YouTubeAPI from 'gapi-to-graphql/google_apis/youtube-v3'
 import { makeExecutableSchema, mergeSchemas, IResolvers } from 'graphql-tools'
-import { TContext } from '../global'
-import { pg, pubsub, upsert } from './knex'
-import { fromBase26, toBase26 } from './Base26'
+import { TContext } from '../../global'
+import { pg, pubsub, upsert } from '../dbConnections'
+import { fromBase26, toBase26 } from '../Base26'
 import IMarkTrackAsPlayedOnMutationArguments = GQL.IMarkTrackAsPlayedOnMutationArguments
-import { dateResolver } from './dateResolver'
+import { dateResolver } from '../dateResolver'
 import IRemoveTrackOnMutationArguments = GQL.IRemoveTrackOnMutationArguments
 
 const PUBSUB_CHANNEL = 'VIDEO_ADDED'
