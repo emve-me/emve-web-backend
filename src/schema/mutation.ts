@@ -39,6 +39,11 @@ export const mutationGql = gql`
     channel: ID
   }
 
+  input HostControlInput {
+    channel: ID
+    action: PlayerControlAction
+  }
+
   type Mutation {
     channelCreate(input: ChannelCreateInput!): ID
     videoPush(input: VideoPushInput!): Track
@@ -46,10 +51,16 @@ export const mutationGql = gql`
     removeTrack(input: RemoveTrackInput!): ID
     markTrackAsPlayed(input: MarkTrakAsPlayedInput!): ID
     channelJoin(input: ChannelJoinInput!): Channel
+    hostControl(input: HostControlInput!): Boolean
   }
 `
 
 export const Mutation = {
+  hostControl: async (_, args, ctx: TContext) => {
+    // make sure user is the host ctx.user
+
+    console.log('got host contro action', args)
+  },
   removeTrack: async (parent, { input: { track } }: IRemoveTrackOnMutationArguments, ctx: TContext) => {
     const [trackToRemove] = await pg('tracks')
       .join('channels', 'tracks.channel', '=', 'channels.id')

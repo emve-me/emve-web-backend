@@ -21,9 +21,10 @@ declare namespace GQL {
   }
 
   interface IQuery {
-    __typename: 'query.ts'
+    __typename: 'Query'
     YoutubeApi: IYoutubeResources | null
     channel: IChannel | null
+    loggedInUser: IUser | null
   }
 
   interface IYoutubeApiOnQueryArguments {
@@ -1350,7 +1351,7 @@ declare namespace GQL {
   }
 
   interface IChannel {
-    __typename: 'channel.ts'
+    __typename: 'Channel'
     id: string | null
     createdOn: string | null
     track: ITrack | null
@@ -1378,7 +1379,7 @@ declare namespace GQL {
   }
 
   interface IUser {
-    __typename: 'user.ts'
+    __typename: 'User'
     id: string | null
     googleId: string | null
     email: string | null
@@ -1394,7 +1395,8 @@ declare namespace GQL {
   const enum TrackState {
     playing = 'playing',
     played = 'played',
-    upcoming = 'upcoming'
+    upcoming = 'upcoming',
+    remove = 'remove'
   }
 
   interface ITracks {
@@ -5039,10 +5041,15 @@ declare namespace GQL {
      */
     subscriberSnippet: ISubscriptionSubscriberSnippet | null
     trackUpdated: ITrack | null
+    playerControl: IPlayerControl | null
   }
 
   interface ITrackUpdatedOnSubscriptionArguments {
     input: ITrackUpdatedInput
+  }
+
+  interface IPlayerControlOnSubscriptionArguments {
+    input: IPlayerControlInput
   }
 
   /**
@@ -5140,6 +5147,23 @@ declare namespace GQL {
 
   interface ITrackUpdatedInput {
     channel?: string | null
+  }
+
+  interface IPlayerControlInput {
+    channel?: string | null
+  }
+
+  interface IPlayerControl {
+    __typename: 'PlayerControl'
+    action: PlayerControlAction | null
+  }
+
+  const enum PlayerControlAction {
+    PAUSE = 'PAUSE',
+    PLAY = 'PLAY',
+    SKIP = 'SKIP',
+    FULLSCREEN = 'FULLSCREEN',
+    EXIT_FULLSCREEN = 'EXIT_FULLSCREEN'
   }
 
   interface ISuperChatEvents {
@@ -7108,10 +7132,11 @@ declare namespace GQL {
     __typename: 'Mutation'
     channelCreate: string | null
     videoPush: ITrack | null
-    authenticate: string | null
+    authenticate: IUser | null
     removeTrack: string | null
     markTrackAsPlayed: string | null
     channelJoin: IChannel | null
+    hostControl: boolean | null
   }
 
   interface IChannelCreateOnMutationArguments {
@@ -7132,6 +7157,10 @@ declare namespace GQL {
 
   interface IChannelJoinOnMutationArguments {
     input: IChannelJoinInput
+  }
+
+  interface IHostControlOnMutationArguments {
+    input: IHostControlInput
   }
 
   interface IChannelCreateInput {
@@ -7156,6 +7185,11 @@ declare namespace GQL {
 
   interface IChannelJoinInput {
     channelId: string
+  }
+
+  interface IHostControlInput {
+    channel?: string | null
+    action?: PlayerControlAction | null
   }
 
   /**
