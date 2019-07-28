@@ -24,29 +24,29 @@
   "homepage": "https://github.com/rlancer/emve-gql-server#readme",
   "dependencies": {
     "@types/pg": "^7.4.14",
-    "apollo-server": "^2.4.8",
+    "apollo-server": "^2.7.2",
     "dataloader": "^1.4.0",
-    "dotenv": "^7.0.0",
-    "gapi-to-graphql": "^2.0.5",
+    "dotenv": "^8.0.0",
+    "gapi-to-graphql": "^2.0.7",
     "google-auth-library": "^3.1.2",
-    "graphql": "^14.2.1",
+    "graphql": "^14.4.2",
     "graphql-postgres-subscriptions": "^1.0.5",
     "graphql-subscriptions": "^1.1.0",
     "knex": "^0.16.5",
-    "pg": "^7.10.0"
+    "pg": "^7.12.0"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^8.3.2",
     "@types/shortid": "0.0.29",
-    "apollo": "^2.9.0",
+    "apollo": "^2.16.2",
     "gql-schema-dl": "0.0.5",
     "gql2ts": "^1.10.1",
-    "husky": "^2.1.0",
-    "nodemon": "^1.18.11",
-    "prettier": "^1.17.0",
-    "pretty-quick": "^1.10.0",
-    "ts-node": "^8.1.0",
-    "typescript": "^3.4.5"
+    "husky": "^2.7.0",
+    "nodemon": "^1.19.1",
+    "prettier": "^1.18.2",
+    "pretty-quick": "^1.11.1",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
   },
   "engines": {
     "node": "10.x.x",

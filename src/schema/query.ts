@@ -4,8 +4,13 @@ import { pg } from '../db'
 import { gql } from 'apollo-server'
 
 export const queryGql = gql`
+  input ChannelQuery {
+    id: ID!
+    played: Boolean
+  }
+
   type Query {
-    channel(id: ID!): Channel
+    channel(input: ChannelQuery!): Channel
     loggedInUser: User
   }
 `
@@ -18,7 +23,7 @@ export const Query = {
 
     return await ctx.user.getDBUser()
   },
-  channel: async (_, { id }, ctx) => {
+  channel: async (_, { input: { id, played = false } }, ctx) => {
     const dbId = fromBase26(id)
     const [channelRow] = await pg('channels')
       .select('*')
@@ -33,7 +38,7 @@ export const Query = {
         .select('*')
         .where({
           channel: dbId,
-          played: false
+          played
         })
         .orderBy('added_on', 'asc')
         .limit(1)
