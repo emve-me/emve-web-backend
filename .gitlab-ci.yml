@@ -1,5 +1,5 @@
 deploy:
-  image: "rlancer/gcloud-node:1.0.2"
+  image: 'rlancer/gcloud-node:1.0.2'
   script:
     - rm Dockerfile
     - gae-ayaml-env
@@ -8,7 +8,5 @@ deploy:
     - echo $GCLOUD_SERVICE > /tmp/$CI_PIPELINE_ID.json
     - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
     - gcloud --quiet --project $GCLOUD_PROJECT_ID app deploy app.yaml
-  tags:
-    - theonlyrunnerthatshouldeverbeusedbycollaborizm
   only:
-    - prod
+    - master

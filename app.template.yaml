@@ -9,6 +9,7 @@ beta_settings:
 env_variables:
   NODE_ENV: 'production'
 
-automatic_scaling:
-  min_num_instances: 1
-  max_num_instances: 5
+instance_class: B1
+
+manual_scaling:
+  instances: 1
