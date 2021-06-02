@@ -1,11 +1,11 @@
-FROM node:14 as dev
+FROM node:lts-slim as dev
 
 WORKDIR /usr/src/app
 
 
 CMD ["npm", "run", "dev"]
 
-FROM node:14 as prod
+FROM node:lts-slim as prod
 
 ENV PORT 5000
 ARG PORT=${PORT}
