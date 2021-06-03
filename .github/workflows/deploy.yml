@@ -6,13 +6,7 @@ on:
 name: Deploy to Amazon ECS
 
 env:
-  AWS_REGION: us-east-2 # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: emve # set this to your Amazon ECR repository name
-  ECS_SERVICE: MY_ECS_SERVICE # set this to your Amazon ECS service name
-  ECS_CLUSTER: MY_ECS_CLUSTER # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION: /.aws/ecs-task-def.json
-  # file, e.g. .aws/task-definition.json
-  CONTAINER_NAME: emve-bootstrap
+  AWS_REGION: us-east-2
 
 jobs:
   deploy:
