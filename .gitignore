@@ -1,6 +1,7 @@
-/node_modules
+node_modules
 /dist
 /.idea
 /.vscode
 /.env
 /.app.yaml
+/.aws/cdk/env

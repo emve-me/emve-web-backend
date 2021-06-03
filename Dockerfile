@@ -2,8 +2,7 @@ FROM node:lts-slim as dev
 
 WORKDIR /usr/src/app
 
-
-CMD ["npm", "run", "dev"]
+CMD exec npm run dev
 
 FROM node:lts-slim as prod
 
