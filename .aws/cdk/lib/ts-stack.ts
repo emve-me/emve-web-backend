@@ -1,8 +1,10 @@
 import * as core from '@aws-cdk/core'
 import * as ecs from '@aws-cdk/aws-ecs'
+import { AwsLogDriverMode, LogDriver } from '@aws-cdk/aws-ecs'
 import * as ecr from '@aws-cdk/aws-ecr'
 import * as ec2 from '@aws-cdk/aws-ec2'
 import * as iam from '@aws-cdk/aws-iam'
+import * as ecsPatterns from '@aws-cdk/aws-ecs-patterns'
 
 export class CdkStack extends core.Stack {
   constructor(scope: core.Construct, id: string, props?: core.StackProps) {
@@ -17,7 +19,7 @@ export class CdkStack extends core.Stack {
       vpc: vpc
     })
 
-    // Create the ECS Task Definition with placeholder container (and named Task Execution IAM Role)
+    // Create the ECS Task Definition with placeholder containerEmveBackend (and named Task Execution IAM Role)
     const executionRole = new iam.Role(this, 'ecs-emve-execution-role', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
       roleName: 'ecs-emve-execution-role'
@@ -36,20 +38,30 @@ export class CdkStack extends core.Stack {
         ]
       })
     )
-    const task_definition = new ecs.FargateTaskDefinition(this, 'ecs-emve-task-definition', {
-      executionRole: executionRole,
-      family: 'ecs-emve-task-definition'
-    })
+    const loggingEmveBackend = new ecs.AwsLogDriver({ streamPrefix: 'emve-backend' })
 
-    const container = task_definition.addContainer('ecs-emve', {
-      image: ecs.ContainerImage.fromRegistry('amazon/amazon-ecs-sample')
-    })
+    const loadBalancedFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(
+      this,
+      'ecs-emve-lb-fargate-service',
+      {
+        cluster,
+        memoryLimitMiB: 1024,
+        cpu: 512,
+        publicLoadBalancer: true,
+        serviceName: 'ecs-emve-service',
+        taskImageOptions: {
+          containerName: 'ecs-emve',
+          image: ecs.ContainerImage.fromRegistry('amazon/amazon-ecs-sample'),
+          containerPort: 5000,
+          enableLogging: true,
+          logDriver: loggingEmveBackend,
+          executionRole: executionRole
+        }
+      }
+    )
 
-    // Create the ECS Service
-    const service = new ecs.FargateService(this, 'ecs-emve-service', {
-      cluster: cluster,
-      taskDefinition: task_definition,
-      serviceName: 'ecs-emve-service'
-    })
+    // loadBalancedFargateService.targetGroup.configureHealthCheck({
+    //     path: "/custom-health-path",
+    // });
   }
 }
