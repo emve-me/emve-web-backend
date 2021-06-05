@@ -4,10 +4,11 @@ import { PostgresPubSub } from 'graphql-postgres-subscriptions'
 import { Client } from 'pg'
 import _ from 'lodash'
 
-const { DB_HOST, DB_PASSWORD, DB_USER, DB_DATABASE } = process.env
-
+const { DB_PASSWORD, DB_USER, DB_DATABASE } = process.env
+const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql'
+console.log(process.env)
 const pubsubDedicatedClient = new Client({
-  host: DB_HOST,
+  host: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
   password: DB_PASSWORD,
   user: DB_USER,
   database: DB_DATABASE
@@ -20,7 +21,7 @@ export const pubsub = new PostgresPubSub({ client: pubsubDedicatedClient })
 export const pg = knex({
   client: 'pg',
   connection: {
-    host: DB_HOST,
+    host: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
     password: DB_PASSWORD,
     user: DB_USER,
     database: DB_DATABASE
