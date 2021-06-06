@@ -12,6 +12,7 @@ const server = new ApolloServer({
   cors: true,
   formatError: error => {
     console.error(error)
+
     return new GraphQLError('GraphQL Error')
   },
   introspection: !isProd,
