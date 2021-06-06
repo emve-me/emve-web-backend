@@ -1,18 +1,10 @@
 import knex from 'knex'
 import assert from 'assert'
-import { PostgresPubSub } from 'graphql-postgres-subscriptions'
-import { Client } from 'pg'
 import _ from 'lodash'
+import { PubSub } from 'apollo-server'
 
 const { DB_PASSWORD, DB_USER, DB_DATABASE } = process.env
 const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql'
-
-const pubsubDedicatedClient = new Client({
-  host: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
-  password: DB_PASSWORD,
-  user: DB_USER,
-  database: DB_DATABASE
-})
 
 console.log('DATABASE CON', {
   host: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
@@ -20,9 +12,8 @@ console.log('DATABASE CON', {
   user: DB_USER,
   database: DB_DATABASE
 })
-pubsubDedicatedClient.connect().catch(error => console.error(error))
 
-export const pubsub = new PostgresPubSub({ client: pubsubDedicatedClient })
+export const pubsub = new PubSub()
 
 export const pg = knex({
   client: 'pg',
@@ -58,3 +49,8 @@ export function upsert({ table, object, key, updateIgnore = [] }) {
 export async function now() {
   return await pg.select(pg.raw('NOW()'))
 }
+
+console.log('trying to connect pg')
+;(async () => {
+  console.log('TIME FOMR PG', await now())
+})()
