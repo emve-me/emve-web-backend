@@ -31,7 +31,8 @@ export const pg = knex({
     password: DB_PASSWORD,
     user: DB_USER,
     database: DB_DATABASE
-  }
+  },
+  pool: { max: 5, min: 5, acquireTimeoutMillis: 60000, idleTimeoutMillis: 600000 }
 })
 
 export function upsert({ table, object, key, updateIgnore = [] }) {
