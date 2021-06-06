@@ -2,6 +2,7 @@ import knex from 'knex'
 import assert from 'assert'
 import _ from 'lodash'
 import { PubSub } from 'apollo-server'
+import { GooglePubSub } from '@axelspringer/graphql-google-pubsub'
 
 const { DB_PASSWORD, DB_USER, DB_DATABASE } = process.env
 const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql'
@@ -13,7 +14,7 @@ console.log('DATABASE CON', {
   database: DB_DATABASE
 })
 
-export const pubsub = new PubSub()
+export const pubsub = true ? new GooglePubSub() : new PubSub()
 
 export const pg = knex({
   client: 'pg',

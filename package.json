@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/rlancer/emve-gql-server#readme",
   "dependencies": {
+    "@axelspringer/graphql-google-pubsub": "^2.1.0",
     "@types/pg": "^7.14.0",
     "apollo-server": "^2.9.14",
     "dataloader": "^1.4.0",
