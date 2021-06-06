@@ -49,8 +49,3 @@ export function upsert({ table, object, key, updateIgnore = [] }) {
 export async function now() {
   return await pg.select(pg.raw('NOW()'))
 }
-
-console.log('trying to connect pg')
-;(async () => {
-  console.log('TIME FOMR PG', await now())
-})()
