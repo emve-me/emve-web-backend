@@ -1,10 +1,10 @@
-FROM node:lts-slim as dev
+FROM node:12-slim as dev
 
 WORKDIR /usr/src/app
 
 CMD exec npm run dev
 
-FROM node:lts-slim as prod
+FROM node:12-slim as prod
 
 ENV PORT 5000
 ARG PORT=${PORT}
