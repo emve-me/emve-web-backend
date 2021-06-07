@@ -14,7 +14,7 @@ console.log('DATABASE CON', {
   database: DB_DATABASE
 })
 
-export const pubsub = true ? new GooglePubSub({ topic: '' }) : new PubSub()
+export const pubsub = new GooglePubSub()
 
 export const pg = knex({
   client: 'pg',
