@@ -45,8 +45,10 @@ export const Channel = {
     const tracks = await pg('tracks')
       .select('*')
       .where(function() {
+        // @ts-ignore
         this.where(whereClause).andWhere(function() {
           if (played === false) {
+            // @ts-ignore
             this.where('tracks.id', '!=', parent.now_playing)
           }
         })

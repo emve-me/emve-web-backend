@@ -38,7 +38,6 @@ export const Subscription = {
     subscribe: withFilter(
       () => pubsub.asyncIterator(PUBSUB_PLAYER),
       (payload, variables) => {
-        console.log('PLAYER CONTROL PUBSUB', { payload, variables })
         return payload.channel.toString() === fromBase26(variables.input.channel).toString()
       }
     )

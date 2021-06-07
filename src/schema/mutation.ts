@@ -58,8 +58,6 @@ export const mutationGql = gql`
 export const Mutation = {
   hostControl: async (_, args, ctx: TContext) => {
     // make sure user is the host ctx.user
-
-    console.log('got host contro action', args)
   },
   removeTrack: async (parent, { input: { track } }: IRemoveTrackOnMutationArguments, ctx: TContext) => {
     const [trackToRemove] = await pg('tracks')
@@ -101,7 +99,6 @@ export const Mutation = {
         .delete()
         .where({ id: track })
         .limit(1)
-      console.log({ deleteResp })
     }
   },
   markTrackAsPlayed: async (parent, args: IMarkTrackAsPlayedOnMutationArguments, ctx: TContext) => {

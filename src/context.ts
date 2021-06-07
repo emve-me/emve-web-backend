@@ -34,13 +34,14 @@ export const context = async ({ req, res, connection }: { req; res; connection? 
         const loaders = createLoaders({ user })
         user.getDBUser = async () => {
           if (user._dbUser) {
-            console.log('returned DB ID FROM CACHE', user._dbUser)
             return user._dbUser
           }
 
-          user._dbUser = (await pg('users')
-            .select('*')
-            .where({ google_id: user.sub }))[0]
+          user._dbUser = (
+            await pg('users')
+              .select('*')
+              .where({ google_id: user.sub })
+          )[0]
 
           return user._dbUser
         }
