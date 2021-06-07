@@ -80,7 +80,6 @@ export const Mutation = {
     const isTrackOwner = (trackToRemove.trackOwner = loggedInUserId)
 
     if (trackToRemove.now_playing === track && isChannelOwner) {
-      console.log('issued pubsub to ski[')
       pubsub.publish(PUBSUB_PLAYER, {
         channel: trackToRemove.channel,
         playerControl: {

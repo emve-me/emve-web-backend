@@ -1,10 +1,4 @@
-FROM node:12-slim as dev
-
-WORKDIR /usr/src/app
-
-CMD exec npm run dev
-
-FROM node:12-slim as prod
+FROM node:12-slim as base
 
 ENV PORT 5000
 ARG PORT=${PORT}
@@ -15,10 +9,16 @@ COPY package*.json ./
 
 RUN npm ci
 
+EXPOSE ${PORT}
+
+FROM base as dev
+
+CMD exec npm run dev
+
+FROM base as prod
+
 COPY . .
 
 RUN npm run build
-
-EXPOSE ${PORT}
 
 CMD exec npm run start
