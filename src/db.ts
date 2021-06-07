@@ -8,11 +8,7 @@ const { DB_PASSWORD, DB_USER, DB_DATABASE } = process.env
 const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql'
 
 function commonMessageHandler({ attributes = {}, data = '' }) {
-  console.log('subscription DATA st', data.toString())
-  return {
-    ...attributes,
-    text: data.toString()
-  }
+  return JSON.parse(data.toString())
 }
 
 export const pubsub = new GooglePubSub({}, undefined, commonMessageHandler)
