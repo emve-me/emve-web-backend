@@ -4,25 +4,45 @@ import _ from 'lodash'
 import { PubSub } from 'apollo-server'
 import { GooglePubSub } from '@axelspringer/graphql-google-pubsub'
 
-const { DB_PASSWORD, DB_USER, DB_DATABASE } = process.env
-const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql'
+const { DB_PASSWORD, DB_USER, DB_DATABASE, CLOUD_SQL_CONNECTION_NAME, DB_HOST } = process.env
 
-function commonMessageHandler({ attributes = {}, data = '' }) {
-  return JSON.parse(data.toString())
+export let pubsub, pg
+
+// If running on GCP
+if (CLOUD_SQL_CONNECTION_NAME) {
+  const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql'
+
+  function commonMessageHandler({ attributes = {}, data = '' }) {
+    return JSON.parse(data.toString())
+  }
+
+  pubsub = new GooglePubSub({}, undefined, commonMessageHandler)
+
+  pg = knex({
+    client: 'pg',
+    connection: {
+      host: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
+      password: DB_PASSWORD,
+      user: DB_USER,
+      database: DB_DATABASE
+    },
+    pool: { max: 5, min: 5, acquireTimeoutMillis: 60000, idleTimeoutMillis: 600000 }
+  })
 }
+// if local
+else {
+  pubsub = new PubSub()
 
-export const pubsub = new GooglePubSub({}, undefined, commonMessageHandler)
-
-export const pg = knex({
-  client: 'pg',
-  connection: {
-    host: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
-    password: DB_PASSWORD,
-    user: DB_USER,
-    database: DB_DATABASE
-  },
-  pool: { max: 5, min: 5, acquireTimeoutMillis: 60000, idleTimeoutMillis: 600000 }
-})
+  pg = knex({
+    client: 'pg',
+    connection: {
+      host: DB_HOST,
+      password: DB_PASSWORD,
+      user: DB_USER,
+      database: DB_DATABASE
+    }
+  })
+}
 
 export function upsert({ table, object, key, updateIgnore = [] }) {
   const keys = typeof key === 'string' ? [key] : key
