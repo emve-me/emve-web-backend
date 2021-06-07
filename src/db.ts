@@ -15,7 +15,7 @@ function commonMessageHandler({ attributes = {}, data = '' }) {
   }
 }
 
-export const pubsub = new GooglePubSub({}, {}, commonMessageHandler)
+export const pubsub = new GooglePubSub({}, undefined, commonMessageHandler)
 
 export const pg = knex({
   client: 'pg',
