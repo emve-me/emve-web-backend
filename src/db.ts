@@ -7,14 +7,15 @@ import { GooglePubSub } from '@axelspringer/graphql-google-pubsub'
 const { DB_PASSWORD, DB_USER, DB_DATABASE } = process.env
 const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql'
 
-console.log('DATABASE CON', {
-  host: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
-  password: DB_PASSWORD,
-  user: DB_USER,
-  database: DB_DATABASE
-})
+function commonMessageHandler({ attributes = {}, data = '' }) {
+  console.log('subscription DATA', data)
+  return {
+    ...attributes,
+    text: data.toString()
+  }
+}
 
-export const pubsub = new GooglePubSub()
+export const pubsub = new GooglePubSub({}, {}, commonMessageHandler)
 
 export const pg = knex({
   client: 'pg',
